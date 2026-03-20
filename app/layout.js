@@ -1,15 +1,15 @@
-import { Playfair_Display, DM_Sans } from 'next/font/google'
+import { Manrope, Inter } from 'next/font/google'
 import './globals.css'
 
-const playfair = Playfair_Display({
+const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  variable: '--font-manrope',
   display: 'swap',
 })
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-dm',
+  variable: '--font-inter',
   display: 'swap',
 })
 
@@ -20,8 +20,18 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
-      <body className="bg-[#0a0f0a] text-[#f0ece0] font-dm antialiased">
+    <html lang="en"
+      className={`${manrope.variable} ${inter.variable}`}
+      suppressHydrationWarning>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+          rel="stylesheet"
+        />
+      </head>
+      <body
+        style={{ backgroundColor: '#f8faf9', color: '#191c1c' }}
+        suppressHydrationWarning>
         {children}
       </body>
     </html>

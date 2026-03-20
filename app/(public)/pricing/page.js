@@ -1,11 +1,47 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import Navbar from '@/components/home/Navbar'
+import Footer from '@/components/home/Footer'
+
+const MONTHLY_FEATURES = [
+  'Full platform access',
+  'Monthly draw entry',
+  '5-score rolling tracker',
+  'Charity contribution (10%+)',
+  'Winner verification system',
+]
+
+const YEARLY_FEATURES = [
+  'Everything in Monthly',
+  '2 Months Free — Save £20.88',
+  '12 guaranteed draw entries',
+  'Priority support',
+  'Discounted rate per month',
+  'Cancel anytime',
+]
+
+const TRUST = [
+  {
+    icon: 'verified_user',
+    title: 'Secure & Private',
+    desc: 'Your data is protected with bank-grade encryption.',
+  },
+  {
+    icon: 'published_with_changes',
+    title: 'Cancel Anytime',
+    desc: 'No lock-in contracts. Stay as long as you want.',
+  },
+  {
+    icon: 'volunteer_activism',
+    title: 'Real Charity Impact',
+    desc: 'At least 10% of every subscription goes to your chosen cause.',
+  },
+]
 
 export default function Pricing() {
   const [loading, setLoading] = useState(null)
-  const [error, setError] = useState('')
+  const [error,   setError]   = useState('')
 
   const handleSubscribe = async (plan) => {
     setLoading(plan)
@@ -13,9 +49,9 @@ export default function Pricing() {
 
     try {
       const res = await fetch('/api/subscription/activate', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body:    JSON.stringify({ plan }),
       })
 
       if (res.ok) {
@@ -32,117 +68,173 @@ export default function Pricing() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-[#f0ece0]">
+    <div className="min-h-screen bg-[#f8faf9] font-body text-[#191c1c]">
+      <Navbar />
 
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-[#1a4a2e]">
-        <Link href="/" className="font-playfair text-2xl tracking-widest text-[#c9a84c]">
-          GREEN<span className="text-[#f0ece0]">HEART</span>
-        </Link>
-        <Link href="/login" className="text-sm text-[#7a9e7e] hover:text-[#f0ece0] transition-colors">
-          Already a member? Login →
-        </Link>
-      </nav>
+      <main className="min-h-screen pt-32 pb-20 px-6 max-w-7xl mx-auto
+                       flex flex-col items-center">
 
-      <div className="max-w-5xl mx-auto px-8 py-20">
-        <div className="text-center mb-16">
-          <p className="text-[#c9a84c] text-xs font-bold tracking-[4px] uppercase mb-4">
-            Simple Pricing
+        {/* Header */}
+        <header className="text-center mb-16 max-w-2xl">
+          <span className="inline-block py-1 px-4 bg-[#9bf6b2] text-emerald-900
+                           text-xs font-bold tracking-widest rounded-full mb-6
+                           uppercase">
+            MEMBERSHIP
+          </span>
+          <h1 className="font-headline text-5xl md:text-6xl text-[#002e0b]
+                         font-extrabold tracking-tight mb-6">
+            Choose Your Impact Level
+          </h1>
+          <p className="text-[#424940] text-lg leading-relaxed">
+            Subscribe monthly or yearly. Support a charity you care about.
+            Enter monthly draws. All in one platform.
           </p>
-          <h1 className="font-playfair text-6xl mb-4">Choose Your Plan</h1>
-          <div className="w-16 h-0.5 bg-[#c9a84c] mx-auto mb-6"></div>
-          <p className="text-[#4a5a4e] max-w-md mx-auto">
-            All plans include full platform access, monthly draws, and charity contributions.
-          </p>
-        </div>
+        </header>
 
+        {/* Error */}
         {error && (
-          <div className="border border-red-900 bg-red-900/20 px-6 py-4 text-red-400 text-sm
-                          text-center mb-8 max-w-md mx-auto">
+          <div className="mb-8 bg-red-50 border border-red-200 text-red-700
+                          px-6 py-4 rounded-xl text-sm max-w-md text-center">
             {error}
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full
+                        max-w-5xl items-stretch">
 
           {/* Monthly */}
-          <div className="border border-[#1a4a2e] p-10 flex flex-col hover:border-[#c9a84c]
-                          transition-colors group">
-            <p className="text-xs text-[#7a9e7e] uppercase tracking-widest mb-4">Monthly Plan</p>
-            <div className="flex items-baseline gap-1 mb-2">
-              <span className="font-playfair text-6xl text-[#f0ece0]">£9</span>
-              <span className="font-playfair text-3xl text-[#c9a84c]">.99</span>
+          <div className="glass-panel rounded-[2rem] p-10 flex flex-col
+                          justify-between hover:scale-[1.01]
+                          transition-transform duration-500">
+            <div>
+              <span className="text-[#424940] text-sm font-bold uppercase
+                               tracking-wider">
+                Monthly Plan
+              </span>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-5xl font-headline font-extrabold
+                                 text-[#002e0b]">
+                  £9.99
+                </span>
+                <span className="text-[#424940] font-medium">/mo</span>
+              </div>
+              <p className="mt-4 text-[#424940] leading-relaxed text-sm">
+                Full access to scores, draws, and charity giving.
+                Cancel anytime.
+              </p>
+              <ul className="mt-10 space-y-4">
+                {MONTHLY_FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-[#006d37]"
+                      style={{fontVariationSettings:"'FILL' 1"}}>
+                      check_circle
+                    </span>
+                    <span className="text-[#191c1c] font-medium text-sm">
+                      {f}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="text-[#4a5a4e] text-sm mb-8">per month · cancel anytime</p>
-
-            <ul className="space-y-3 mb-10 flex-grow">
-              {[
-                'Full platform access',
-                'Monthly draw entry',
-                '5-score rolling tracker',
-                'Charity contribution (10%+)',
-                'Winner verification system',
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-3 text-sm text-[#7a9e7e]">
-                  <span className="text-[#c9a84c]">✓</span> {f}
-                </li>
-              ))}
-            </ul>
 
             <button
               onClick={() => handleSubscribe('monthly')}
               disabled={!!loading}
-              className="w-full border border-[#c9a84c] text-[#c9a84c] py-4 font-bold
-                         tracking-widest uppercase text-sm hover:bg-[#c9a84c] hover:text-[#0a0f0a]
-                         transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading === 'monthly' ? 'Processing...' : 'Subscribe Monthly'}
+              className="mt-12 w-full py-4 rounded-full border-2
+                         border-[#002e0b] text-[#002e0b] font-bold
+                         hover:bg-[#002e0b] hover:text-white
+                         transition-all duration-300
+                         disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading === 'monthly' ? 'Processing...' : 'Start Monthly'}
             </button>
           </div>
 
           {/* Yearly */}
-          <div className="border-2 border-[#c9a84c] p-10 flex flex-col relative bg-[#0f2d1a]">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#c9a84c]
-                            text-[#0a0f0a] text-xs font-bold px-6 py-1.5 tracking-widest uppercase">
-              Best Value
-            </div>
-            <p className="text-xs text-[#c9a84c] uppercase tracking-widest mb-4">Yearly Plan</p>
-            <div className="flex items-baseline gap-1 mb-2">
-              <span className="font-playfair text-6xl text-[#f0ece0]">£99</span>
-            </div>
-            <p className="text-[#4a5a4e] text-sm mb-8">per year · save £20.88</p>
+          <div className="rounded-[2rem] p-10 flex flex-col justify-between
+                          relative overflow-hidden shadow-2xl
+                          shadow-emerald-950/20 hover:scale-[1.01]
+                          transition-transform duration-500"
+            style={{background:'linear-gradient(135deg,#002e0b 0%,#0b4619 100%)'}}>
 
-            <ul className="space-y-3 mb-10 flex-grow">
-              {[
-                'Full platform access',
-                '12 draw entries guaranteed',
-                '5-score rolling tracker',
-                'Charity contribution (10%+)',
-                'Winner verification system',
-                'Discounted rate',
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-3 text-sm text-[#7a9e7e]">
-                  <span className="text-[#c9a84c]">✓</span> {f}
-                </li>
-              ))}
-            </ul>
+            <div className="absolute -top-24 -right-24 w-64 h-64
+                            bg-white/10 rounded-full blur-3xl
+                            pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex justify-between items-start">
+                <span className="text-emerald-200 text-sm font-bold
+                                 uppercase tracking-wider">
+                  Annual Plan
+                </span>
+                <span className="bg-[#6bfe9c] text-emerald-950 text-[10px]
+                                 font-black tracking-widest px-3 py-1
+                                 rounded-full">
+                  BEST VALUE
+                </span>
+              </div>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-5xl font-headline font-extrabold
+                                 text-white">
+                  £99
+                </span>
+                <span className="text-emerald-200 font-medium">/yr</span>
+              </div>
+              <p className="mt-4 text-emerald-100/80 leading-relaxed text-sm">
+                Best value — equivalent to £8.25/month. Two months free
+                compared to monthly billing.
+              </p>
+              <ul className="mt-10 space-y-4">
+                {YEARLY_FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-[#6bfe9c]"
+                      style={{fontVariationSettings:"'FILL' 1"}}>
+                      check_circle
+                    </span>
+                    <span className="text-white font-medium text-sm">{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <button
               onClick={() => handleSubscribe('yearly')}
               disabled={!!loading}
-              className="w-full bg-[#c9a84c] text-[#0a0f0a] py-4 font-bold tracking-widest
-                         uppercase text-sm hover:bg-[#b8943d] transition-colors
-                         disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading === 'yearly' ? 'Processing...' : 'Subscribe Yearly →'}
+              className="mt-12 w-full py-4 rounded-full bg-white
+                         text-emerald-950 font-extrabold hover:bg-emerald-50
+                         transition-all duration-300 shadow-xl relative z-10
+                         disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading === 'yearly' ? 'Processing...' : 'Start Your Legacy'}
             </button>
           </div>
         </div>
 
-        <p className="text-center text-[#2a3a2e] text-xs mt-10">
-          🔒 No real payment processed · Demo activation only · Cancel anytime
+        {/* Disclaimer */}
+        <p className="mt-8 text-xs text-[#424940]/60 text-center">
+          No real payment processed · Demo activation only · Cancel anytime
         </p>
-      </div>
+
+        {/* Trust */}
+        <section className="mt-24 w-full grid grid-cols-1 md:grid-cols-3
+                            gap-12 text-center border-t border-[#c1c9bd]/20
+                            pt-16">
+          {TRUST.map((t) => (
+            <div key={t.title} className="flex flex-col items-center">
+              <span className="material-symbols-outlined text-[#006d37]
+                               text-4xl mb-4">
+                {t.icon}
+              </span>
+              <h4 className="font-headline font-extrabold text-[#002e0b] mb-2">
+                {t.title}
+              </h4>
+              <p className="text-[#424940] text-sm leading-relaxed">{t.desc}</p>
+            </div>
+          ))}
+        </section>
+
+      </main>
+
+      <Footer />
     </div>
   )
 }

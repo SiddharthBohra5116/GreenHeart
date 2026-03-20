@@ -2,13 +2,21 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import AuthLeftPanel from '@/components/auth/AuthLeftPanel'
+
+const BENEFITS = [
+  { icon: 'redeem',           label: 'Monthly prize draws' },
+  { icon: 'volunteer_activism', label: 'Direct charity impact' },
+  { icon: 'analytics',        label: 'Score tracking' },
+  { icon: 'verified_user',    label: 'Winner verification' },
+]
 
 export default function Signup() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [name,     setName]     = useState('')
+  const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState('')
 
   const handleSignup = async (e) => {
     e.preventDefault()
@@ -17,11 +25,10 @@ export default function Signup() {
 
     try {
       const res = await fetch('/api/auth/signup', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body:    JSON.stringify({ name, email, password }),
       })
-
       const data = await res.json()
 
       if (res.ok) {
@@ -37,123 +44,131 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] grid grid-cols-1 lg:grid-cols-2">
+    <main className="min-h-screen flex flex-col md:flex-row overflow-hidden
+                     bg-[#f8faf9]">
 
-      {/* Left panel */}
-      <div className="hidden lg:flex bg-[#0f2d1a] flex-col justify-center px-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5"
-          style={{backgroundImage: 'radial-gradient(circle at 70% 30%, #c9a84c, transparent 60%)'}}>
-        </div>
-        <div className="relative z-10">
-          <Link href="/" className="font-playfair text-3xl tracking-widest text-[#c9a84c] mb-16 block">
-            GREEN<span className="text-[#f0ece0]">HEART</span>
-          </Link>
-          <h2 className="font-playfair text-5xl leading-tight mb-6">
-            Join the<br/>
-            <span className="text-[#c9a84c] italic">movement.</span>
-          </h2>
-          <p className="text-[#4a5a4e] leading-relaxed max-w-sm mb-12">
-            Play golf. Win prizes. Support causes that matter. 
-            Thousands of golfers already making a difference.
-          </p>
-          <div className="space-y-4">
-            {[
-              '✓ Monthly prize draw entry',
-              '✓ 5-score rolling tracker',
-              '✓ Charity contribution tracking',
-              '✓ Winner verification system',
-            ].map((item) => (
-              <div key={item} className="text-sm text-[#7a9e7e]">{item}</div>
-            ))}
+      <AuthLeftPanel
+        title="Join a movement of purposeful players."
+        subtitle='"Elevating the game to change the world, one heartbeat at a time."'
+        benefits={BENEFITS}
+      />
+
+      {/* Right Panel */}
+      <section className="w-full md:w-1/2 bg-[#f8faf9] flex items-center
+                          justify-center p-6 md:p-12 lg:p-24">
+        <div className="w-full max-w-md">
+
+          <div className="mb-10">
+            <h2 className="font-headline text-3xl text-[#002e0b] mb-2">
+              Create your account
+            </h2>
+            <p className="text-[#424940]">
+              Start your journey toward sustainable impact.
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="flex flex-col justify-center px-8 lg:px-16 py-20">
-        <div className="max-w-md w-full mx-auto">
-          <Link href="/"
-            className="font-playfair text-2xl tracking-widest text-[#c9a84c] mb-12 block lg:hidden">
-            GREEN<span className="text-[#f0ece0]">HEART</span>
-          </Link>
-
-          <p className="text-[#7a9e7e] text-xs tracking-[3px] uppercase mb-3">Create Account</p>
-          <h1 className="font-playfair text-5xl mb-2 text-[#f0ece0]">Sign Up</h1>
-          <div className="w-10 h-0.5 bg-[#c9a84c] mb-10"></div>
 
           <form onSubmit={handleSignup} className="space-y-6">
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase text-[#4a5a4e] mb-3">
+
+            {/* Name */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-[#191c1c] ml-1"
+                htmlFor="fullname">
                 Full Name
               </label>
               <input
+                id="fullname"
                 type="text"
-                placeholder="James Harrington"
+                placeholder="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full bg-[#0f2d1a] border border-[#1a4a2e] text-[#f0ece0]
-                           px-4 py-4 outline-none focus:border-[#c9a84c] transition-colors
-                           placeholder:text-[#2a3a2e]"
+                className="w-full bg-[#f2f4f3] border-none rounded-xl px-5 py-4
+                           text-[#191c1c] placeholder:text-[#72796f] outline-none
+                           focus:ring-2 focus:ring-[#006d37]/30 transition-all"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase text-[#4a5a4e] mb-3">
+            {/* Email */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-[#191c1c] ml-1"
+                htmlFor="email">
                 Email Address
               </label>
               <input
+                id="email"
                 type="email"
-                placeholder="your@email.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-[#0f2d1a] border border-[#1a4a2e] text-[#f0ece0]
-                           px-4 py-4 outline-none focus:border-[#c9a84c] transition-colors
-                           placeholder:text-[#2a3a2e]"
+                className="w-full bg-[#f2f4f3] border-none rounded-xl px-5 py-4
+                           text-[#191c1c] placeholder:text-[#72796f] outline-none
+                           focus:ring-2 focus:ring-[#006d37]/30 transition-all"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase text-[#4a5a4e] mb-3">
-                Password
-              </label>
+            {/* Password */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium text-[#191c1c] ml-1"
+                  htmlFor="password">
+                  Password
+                </label>
+                <span className="text-xs text-[#424940]">Min. 6 characters</span>
+              </div>
               <input
+                id="password"
                 type="password"
-                placeholder="Min. 6 characters"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full bg-[#0f2d1a] border border-[#1a4a2e] text-[#f0ece0]
-                           px-4 py-4 outline-none focus:border-[#c9a84c] transition-colors
-                           placeholder:text-[#2a3a2e]"
+                className="w-full bg-[#f2f4f3] border-none rounded-xl px-5 py-4
+                           text-[#191c1c] placeholder:text-[#72796f] outline-none
+                           focus:ring-2 focus:ring-[#006d37]/30 transition-all"
               />
             </div>
 
+            {/* Error */}
             {error && (
-              <div className="border border-red-900 bg-red-900/20 px-4 py-3 text-red-400 text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700
+                              px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#c9a84c] text-[#0a0f0a] py-4 font-bold tracking-widest
-                         uppercase text-sm hover:bg-[#b8943d] transition-colors
+              className="w-full text-white font-label font-bold py-5 rounded-full
+                         shadow-lg hover:scale-[1.02] active:scale-[0.98]
+                         transition-all flex items-center justify-center gap-2
                          disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Creating Account...' : 'Create Account →'}
+              style={{background: 'linear-gradient(135deg, #002e0b 0%, #0b4619 100%)'}}>
+              {loading ? 'Creating Account...' : 'Create Account'}
+              {!loading && (
+                <span className="material-symbols-outlined text-sm">
+                  arrow_forward
+                </span>
+              )}
             </button>
+
           </form>
 
-          <p className="mt-8 text-sm text-[#4a5a4e]">
-            Already have an account?{' '}
-            <Link href="/login" className="text-[#c9a84c] hover:underline">Sign in</Link>
-          </p>
+          <div className="mt-10 text-center">
+            <p className="text-[#424940]">
+              Already a member?{' '}
+              <Link href="/login"
+                className="text-[#006d37] font-bold hover:underline ml-1">
+                Sign in
+              </Link>
+            </p>
+          </div>
+
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }

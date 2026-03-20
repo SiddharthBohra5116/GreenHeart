@@ -7,59 +7,106 @@ export default async function AdminUsers() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+
+      {/* Header */}
       <div>
-        <p className="text-[#c9a84c] text-xs tracking-[3px] uppercase mb-2">Management</p>
-        <h1 className="font-playfair text-5xl">Users</h1>
-        <div className="w-12 h-0.5 bg-[#c9a84c] mt-3"></div>
+        <h1 className="text-5xl font-extrabold font-headline text-primary mb-2">
+          Users
+        </h1>
+        <p className="text-on-surface-variant font-medium">
+          Manage subscriptions, plans and charity preferences.
+        </p>
       </div>
 
-      <div className="border border-[#1a4a2e] overflow-hidden">
+      {/* Table Container */}
+      <div className="glass-panel rounded-2xl overflow-hidden shadow-sm">
+
+        {/* Table */}
         <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#1a4a2e] bg-[#0f2d1a]">
-              {['Name', 'Email', 'Plan', 'Status', 'Expiry', 'Charity'].map((h) => (
+
+          {/* Head */}
+          <thead className="bg-surface-container-low border-b border-outline-variant/20">
+            <tr>
+              {['User', 'Plan', 'Status', 'Expiry', 'Charity'].map((h) => (
                 <th key={h}
-                  className="text-left px-4 py-3 text-xs text-[#4a5a4e]
-                             uppercase tracking-wider font-bold">
+                  className="text-left px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1a4a2e]">
+
+          {/* Body */}
+          <tbody className="divide-y divide-outline-variant/10">
+
             {users?.map((u) => (
-              <tr key={u.id} className="hover:bg-[#0f2d1a] transition-colors">
-                <td className="px-4 py-3 font-medium">{u.name || '—'}</td>
-                <td className="px-4 py-3 text-[#4a5a4e]">{u.email}</td>
-                <td className="px-4 py-3 capitalize text-[#7a9e7e]">
+              <tr key={u.id}
+                className="hover:bg-white/40 transition-colors">
+
+                {/* User */}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-4">
+
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full soulful-gradient flex items-center justify-center text-white text-xs font-bold">
+                      {(u.name || 'U')
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .slice(0, 2)}
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-on-surface">
+                        {u.name || 'Unknown'}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">
+                        {u.email}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+
+                {/* Plan */}
+                <td className="px-6 py-4 capitalize font-medium text-primary">
                   {u.subscription_plan || '—'}
                 </td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 ${
+
+                {/* Status */}
+                <td className="px-6 py-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                     u.subscription_status === 'active'
-                      ? 'bg-emerald-900/30 text-emerald-400'
-                      : 'bg-red-900/30 text-red-400'
+                      ? 'bg-secondary text-white'
+                      : 'bg-red-500 text-white'
                   }`}>
-                    {u.subscription_status}
+                    {u.subscription_status || 'inactive'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-[#4a5a4e] text-xs">
+
+                {/* Expiry */}
+                <td className="px-6 py-4 text-on-surface-variant text-xs">
                   {u.subscription_expiry
-                    ? new Date(u.subscription_expiry).toLocaleDateString('en-GB')
+                    ? new Date(u.subscription_expiry).toLocaleDateString()
                     : '—'}
                 </td>
-                <td className="px-4 py-3 text-[#7a9e7e] text-xs">
+
+                {/* Charity */}
+                <td className="px-6 py-4 text-secondary font-medium text-xs">
                   {u.charities?.name || '—'}
                 </td>
+
               </tr>
             ))}
           </tbody>
         </table>
 
+        {/* Empty State */}
         {(!users || users.length === 0) && (
-          <div className="text-center py-16 text-[#4a5a4e]">
-            <p className="font-playfair text-2xl mb-2">No users yet</p>
+          <div className="text-center py-20">
+            <p className="text-2xl font-headline text-on-surface-variant">
+              No users yet
+            </p>
           </div>
         )}
       </div>

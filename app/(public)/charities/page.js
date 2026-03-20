@@ -1,90 +1,236 @@
-import Link from 'next/link'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+'use client'
 
-export default async function Charities() {
-  const { data: charities } = await supabaseAdmin
-    .from('charities')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true })
+import { useState } from 'react'
+import Link from 'next/link'
+import Navbar from '@/components/home/Navbar'
+import Footer from '@/components/home/Footer'
+
+const CATEGORIES = ['All', 'Environment', 'Health', 'Youth', 'Community']
+
+const CHARITIES = [
+  {
+    img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800',
+    category: 'Environment',
+    name: 'Plant a Future',
+    desc: 'Restoring healthy forests and reducing extreme poverty by employing local villagers to plant millions of trees every year.',
+    raised: '£12,450',
+    progress: 75,
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800',
+    category: 'Youth',
+    name: 'Junior Golf Foundation',
+    desc: 'Providing scholarships and educational resources to bright students in underserved communities through the sport of golf.',
+    raised: '£6,800',
+    progress: 45,
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=800',
+    category: 'Health',
+    name: 'Hearts & Holes',
+    desc: 'Funding cardiac research through the love of golf. Every round counts toward saving lives.',
+    raised: '£8,200',
+    progress: 62,
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800',
+    category: 'Environment',
+    name: 'Summit Conservation',
+    desc: 'Protecting mountain ecosystems and wildlife habitats from the effects of encroaching development.',
+    raised: '£3,100',
+    progress: 15,
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=800',
+    category: 'Community',
+    name: 'Veterans on the Fairway',
+    desc: 'Using golf as therapy and community for armed forces veterans. Healing through sport.',
+    raised: '£5,100',
+    progress: 60,
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800',
+    category: 'Health',
+    name: 'Mind on the Course',
+    desc: 'Mental health support for golfers and their families. Because the game starts in the mind.',
+    raised: '£3,900',
+    progress: 80,
+  },
+]
+
+const CATEGORY_COLORS = {
+  Environment: { bg: '#9bf6b2', text: '#00210c' },
+  Youth:       { bg: '#6bfe9c', text: '#00210c' },
+  Health:      { bg: '#c8e6c9', text: '#1b5e20' },
+  Community:   { bg: '#b2dfdb', text: '#004d40' },
+}
+
+export default function Charities() {
+  const [active, setActive] = useState('All')
+
+  const filtered = active === 'All'
+    ? CHARITIES
+    : CHARITIES.filter(c => c.category === active)
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-[#f0ece0]">
+    <div className="min-h-screen bg-[#f8faf9] font-body text-[#191c1c]">
+      <Navbar />
 
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-[#1a4a2e]">
-        <Link href="/" className="font-playfair text-2xl tracking-widest text-[#c9a84c]">
-          GREEN<span className="text-[#f0ece0]">HEART</span>
-        </Link>
-        <div className="flex gap-6 items-center">
-          <Link href="/login"
-            className="text-sm text-[#7a9e7e] hover:text-[#f0ece0] transition-colors">
-            Login
-          </Link>
-          <Link href="/signup"
-            className="bg-[#c9a84c] text-[#0a0f0a] px-5 py-2 text-sm font-bold
-                       tracking-widest uppercase hover:bg-[#b8943d] transition-colors">
-            Join Now
-          </Link>
-        </div>
-      </nav>
+      <main className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
 
-      {/* Hero */}
-      <div className="bg-[#0f2d1a] px-8 py-20">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-[#c9a84c] text-xs font-bold tracking-[4px] uppercase mb-4">
-            Supporting Good Causes
-          </p>
-          <h1 className="font-playfair text-6xl lg:text-7xl mb-4">Our Charities</h1>
-          <div className="w-16 h-0.5 bg-[#c9a84c] mb-6"></div>
-          <p className="text-[#4a5a4e] max-w-xl leading-relaxed">
-            Every GreenHeart subscription donates at least 10% to a charity of your choice.
-            Explore the causes below and find the one closest to your heart.
-          </p>
-        </div>
-      </div>
+        {/* ── HERO BANNER ── */}
+        <header className="rounded-[2rem] p-12 md:p-24 relative overflow-hidden
+                           mb-16 shadow-2xl"
+          style={{background:'linear-gradient(135deg,#002e0b 0%,#0b4619 100%)'}}>
 
-      {/* Charities Grid */}
-      <div className="max-w-6xl mx-auto px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {charities?.map((c) => (
-            <div key={c.id}
-              className="border border-[#1a4a2e] p-8 hover:border-[#c9a84c]
-                         transition-colors group">
-              <div className="text-xs text-[#7a9e7e] uppercase tracking-wider mb-2 capitalize">
-                {c.category}
-              </div>
-              <h3 className="font-playfair text-2xl mb-3 group-hover:text-[#c9a84c] transition-colors">
-                {c.name}
-              </h3>
-              <p className="text-[#4a5a4e] text-sm leading-relaxed mb-6">
-                {c.description}
-              </p>
-              <div className="pt-4 border-t border-[#1a4a2e]">
-                <div className="text-xs text-[#c9a84c] font-bold uppercase tracking-wider">
-                  Active Cause
+          {/* Decorative blurs */}
+          <div className="absolute -right-20 -top-20 w-96 h-96
+                          bg-[#006d37]/20 rounded-full blur-3xl
+                          pointer-events-none" />
+          <div className="absolute -right-10 -bottom-10 w-64 h-64
+                          bg-[#6bfe9c]/10 rounded-full blur-2xl
+                          pointer-events-none" />
+
+          <div className="relative z-10 max-w-3xl">
+            <span className="inline-block bg-[#9bf6b2] text-emerald-900
+                             px-4 py-1 rounded-full text-xs font-bold
+                             tracking-widest uppercase mb-6">
+              Our Partners
+            </span>
+            <h1 className="text-5xl md:text-7xl font-headline font-extrabold
+                           text-white tracking-tight leading-tight mb-6">
+              Charities We Support
+            </h1>
+            <p className="text-lg md:text-xl text-emerald-100/80 font-medium
+                          max-w-xl">
+              We partner with transparent, high-impact organisations
+              dedicated to restoring our planet and empowering communities.
+              Every subscription makes a direct difference.
+            </p>
+          </div>
+        </header>
+
+        {/* ── CATEGORY FILTERS ── */}
+        <section className="mb-12">
+          <div className="flex flex-wrap items-center gap-4">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActive(cat)}
+                className={`px-8 py-3 rounded-full font-semibold text-sm
+                            transition-all duration-300 ${
+                  active === cat
+                    ? 'text-white shadow-lg hover:scale-105'
+                    : 'bg-[#f2f4f3] text-[#424940] hover:bg-[#e6e9e8]'
+                }`}
+                style={active === cat
+                  ? {background:'linear-gradient(135deg,#002e0b 0%,#0b4619 100%)'}
+                  : {}}>
+                {cat}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ── CHARITIES GRID ── */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filtered.map((c) => {
+            const colors = CATEGORY_COLORS[c.category] ||
+              { bg: '#9bf6b2', text: '#00210c' }
+
+            return (
+              <div key={c.name}
+                className="glass-panel rounded-[2rem] p-8 flex flex-col h-full
+                           group hover:-translate-y-2 transition-transform
+                           duration-500">
+
+                {/* Image */}
+                <div className="mb-6 relative h-48 overflow-hidden rounded-[1.5rem]">
+                  <img
+                    src={c.img}
+                    alt={c.name}
+                    className="w-full h-full object-cover transition-transform
+                               duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold
+                                     uppercase tracking-wider"
+                      style={{backgroundColor: colors.bg, color: colors.text}}>
+                      {c.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <h3 className="text-2xl font-headline font-extrabold
+                               text-[#191c1c] mb-3">
+                  {c.name}
+                </h3>
+                <p className="text-[#424940] text-sm leading-relaxed mb-6
+                              flex-grow">
+                  {c.desc}
+                </p>
+
+                {/* Progress */}
+                <div className="mt-auto">
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-xs font-bold text-[#424940]
+                                     uppercase tracking-tighter">
+                      Impact Progress
+                    </span>
+                    <span className="text-lg font-headline font-extrabold
+                                     text-[#006d37]">
+                      {c.raised}{' '}
+                      <span className="text-xs font-medium text-[#424940]">
+                        raised
+                      </span>
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-[#e1e3e2] rounded-full
+                                  overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${c.progress}%`,
+                        background: 'linear-gradient(135deg,#002e0b,#0b4619)'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
+        </section>
 
-          {/* Empty state */}
-          {(!charities || charities.length === 0) && (
-            <div className="col-span-3 text-center py-20 text-[#4a5a4e]">
-              <p className="font-playfair text-2xl mb-2">No charities yet</p>
-              <p className="text-sm">Check back soon.</p>
-            </div>
-          )}
-        </div>
+        {/* ── CTA ── */}
+        <section className="mt-24 text-center">
+          <div className="glass-panel p-16 rounded-[2rem] max-w-4xl mx-auto
+                          shadow-2xl shadow-emerald-900/5">
+            <h2 className="text-4xl font-headline font-extrabold text-[#191c1c]
+                           mb-6 tracking-tight">
+              Ready to make an impact?
+            </h2>
+            <p className="text-[#424940] text-lg mb-10 max-w-2xl mx-auto">
+              Every contribution counts towards a greener, more equitable
+              future. Join thousands of golfers already making a difference.
+            </p>
+            <Link href="/signup"
+              className="text-white px-12 py-5 rounded-full font-bold text-lg
+                         inline-flex items-center gap-3 group hover:scale-105
+                         transition-transform shadow-xl"
+              style={{background:'linear-gradient(135deg,#002e0b 0%,#0b4619 100%)'}}>
+              Join &amp; Choose Your Cause
+              <span className="material-symbols-outlined transition-transform
+                               group-hover:translate-x-1">
+                arrow_forward
+              </span>
+            </Link>
+          </div>
+        </section>
 
-        <div className="mt-16 text-center">
-          <Link href="/signup"
-            className="bg-[#c9a84c] text-[#0a0f0a] px-10 py-4 font-bold
-                       tracking-widest uppercase text-sm hover:bg-[#b8943d] transition-colors">
-            Join & Choose Your Cause →
-          </Link>
-        </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   )
 }

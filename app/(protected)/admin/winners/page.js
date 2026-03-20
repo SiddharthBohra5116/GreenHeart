@@ -33,92 +33,138 @@ export default function AdminWinners() {
   }
 
   const pending = winners.filter(w => w.status === 'pending_verification')
-  const all = winners
-
-  const displayed = tab === 'pending' ? pending : all
+  const displayed = tab === 'pending' ? pending : winners
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+
+      {/* Header */}
       <div>
-        <p className="text-[#c9a84c] text-xs tracking-[3px] uppercase mb-2">Verification</p>
-        <h1 className="font-playfair text-5xl">Winners</h1>
-        <div className="w-12 h-0.5 bg-[#c9a84c] mt-3"></div>
+        <h1 className="text-5xl font-extrabold font-headline text-primary mb-2">
+          Winner Verification
+        </h1>
+        <p className="text-on-surface-variant max-w-2xl font-medium">
+          Review and validate winners before releasing payouts.
+        </p>
       </div>
 
+      {/* Message */}
       {message && (
-        <div className="border border-emerald-900 bg-emerald-900/20 px-6 py-4
-                        text-emerald-400 text-sm">
+        <div className="glass-panel px-6 py-4 text-sm text-secondary font-semibold">
           {message}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-[#1a4a2e]">
+      <div className="flex gap-8 border-b border-outline-variant/20">
         {[
           { key: 'pending', label: `Pending (${pending.length})` },
-          { key: 'all', label: `All Winners (${all.length})` },
+          { key: 'all', label: `All Winners (${winners.length})` },
         ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-6 py-3 text-sm font-bold tracking-wider uppercase
-                        border-b-2 transition-colors ${
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`pb-4 text-sm font-bold transition-all ${
               tab === t.key
-                ? 'border-[#c9a84c] text-[#c9a84c]'
-                : 'border-transparent text-[#4a5a4e] hover:text-[#7a9e7e]'
-            }`}>
+                ? 'border-b-2 border-secondary text-secondary'
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* Winners List */}
-      <div className="space-y-4">
-        {loading && (
-          <div className="text-center py-12 text-[#4a5a4e]">Loading...</div>
-        )}
+      {/* Loading */}
+      {loading && (
+        <div className="text-center py-16 text-on-surface-variant">
+          Loading winners...
+        </div>
+      )}
 
-        {!loading && displayed.length === 0 && (
-          <div className="text-center py-16 border border-[#1a4a2e]">
-            <p className="font-playfair text-2xl text-[#4a5a4e] mb-2">
-              {tab === 'pending' ? 'No pending verifications' : 'No winners yet'}
-            </p>
-          </div>
-        )}
+      {/* Empty */}
+      {!loading && displayed.length === 0 && (
+        <div className="text-center py-20 glass-panel rounded-lg">
+          <p className="text-2xl font-headline text-on-surface-variant">
+            {tab === 'pending'
+              ? 'No pending verifications'
+              : 'No winners yet'}
+          </p>
+        </div>
+      )}
 
+      {/* Cards */}
+      <div className="space-y-6">
         {displayed.map(w => (
-          <div key={w.id} className="border border-[#1a4a2e] p-6 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="font-bold text-lg">{w.users?.name || 'Unknown'}</div>
-                <div className="text-[#4a5a4e] text-sm">{w.users?.email}</div>
+          <div key={w.id}
+            className="glass-panel p-8 rounded-lg shadow-sm hover:shadow-md transition-all">
+
+            {/* Top */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+
+              {/* User */}
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-full soulful-gradient flex items-center justify-center text-white font-bold">
+                  {(w.users?.name || 'U')
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .slice(0, 2)}
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-on-surface">
+                    {w.users?.name || 'Unknown'}
+                  </h3>
+                  <p className="text-on-surface-variant text-sm">
+                    {w.users?.email}
+                  </p>
+                </div>
               </div>
-              <span className={`text-xs font-bold uppercase px-3 py-1 ${
-                w.status === 'paid' ? 'bg-emerald-900/30 text-emerald-400'
-                : w.status === 'approved' ? 'bg-blue-900/30 text-blue-400'
-                : w.status === 'rejected' ? 'bg-red-900/30 text-red-400'
-                : 'bg-yellow-900/30 text-yellow-400'
+
+              {/* Status */}
+              <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                w.status === 'paid'
+                  ? 'bg-secondary text-white'
+                  : w.status === 'approved'
+                  ? 'bg-blue-500 text-white'
+                  : w.status === 'rejected'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-yellow-400 text-black'
               }`}>
                 {w.status}
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            {/* Stats */}
+            <div className="grid md:grid-cols-3 gap-6 p-5 rounded-lg bg-surface-container-low mb-6">
+
               <div>
-                <div className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-1">Match</div>
-                <div className="font-bold text-[#c9a84c]">{w.match_count}-Match</div>
+                <p className="text-xs text-on-surface-variant uppercase mb-1">
+                  Match Type
+                </p>
+                <p className="font-bold text-primary">
+                  {w.match_count}-Match
+                </p>
               </div>
+
               <div>
-                <div className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-1">Prize</div>
-                <div className="font-playfair text-2xl">£{w.prize_amount?.toFixed(2)}</div>
+                <p className="text-xs text-on-surface-variant uppercase mb-1">
+                  Prize
+                </p>
+                <p className="text-3xl font-headline font-extrabold text-secondary">
+                  ₹{w.prize_amount?.toLocaleString()}
+                </p>
               </div>
+
               <div>
-                <div className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-1">
-                  Matched Numbers
-                </div>
-                <div className="flex gap-1">
+                <p className="text-xs text-on-surface-variant uppercase mb-1">
+                  Numbers
+                </p>
+                <div className="flex gap-2 mt-2 flex-wrap">
                   {w.matched_numbers?.map(n => (
                     <span key={n}
-                      className="bg-[#c9a84c] text-[#0a0f0a] w-7 h-7 flex items-center
-                                 justify-center text-xs font-bold">
+                      className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-xs font-bold">
                       {n}
                     </span>
                   ))}
@@ -126,37 +172,46 @@ export default function AdminWinners() {
               </div>
             </div>
 
+            {/* Proof */}
             {w.proof_url && (
-              <div>
-                <div className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-1">Proof</div>
-                <div className="text-[#7a9e7e] text-sm break-all">{w.proof_url}</div>
+              <div className="flex items-center gap-2 text-secondary font-medium mb-4">
+                <span className="material-symbols-outlined text-sm">
+                  description
+                </span>
+                <a href={w.proof_url} target="_blank"
+                  className="underline hover:text-primary">
+                  View Proof
+                </a>
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex gap-3 pt-2 border-t border-[#1a4a2e]">
+            <div className="flex gap-4 border-t pt-5">
+
               {w.status === 'pending_verification' && (
                 <>
-                  <button onClick={() => handleAction(w.id, 'approve')}
-                    className="bg-emerald-700 text-white px-6 py-2 text-xs font-bold
-                               tracking-wider uppercase hover:bg-emerald-600 transition-colors">
-                    ✓ Approve
+                  <button
+                    onClick={() => handleAction(w.id, 'reject')}
+                    className="px-6 py-2 border-2 border-red-500 text-red-500 rounded-full text-sm font-bold hover:bg-red-50">
+                    Reject
                   </button>
-                  <button onClick={() => handleAction(w.id, 'reject')}
-                    className="border border-red-900 text-red-400 px-6 py-2 text-xs
-                               font-bold tracking-wider uppercase hover:bg-red-900/20
-                               transition-colors">
-                    ✗ Reject
+
+                  <button
+                    onClick={() => handleAction(w.id, 'approve')}
+                    className="px-6 py-2 rounded-full soulful-gradient text-white text-sm font-bold shadow-md hover:scale-105 transition">
+                    Approve
                   </button>
                 </>
               )}
+
               {w.status === 'approved' && (
-                <button onClick={() => handleAction(w.id, 'paid')}
-                  className="bg-[#c9a84c] text-[#0a0f0a] px-6 py-2 text-xs font-bold
-                             tracking-wider uppercase hover:bg-[#b8943d] transition-colors">
-                  £ Mark as Paid
+                <button
+                  onClick={() => handleAction(w.id, 'paid')}
+                  className="px-6 py-2 rounded-full bg-secondary text-white font-bold text-sm">
+                  Mark as Paid
                 </button>
               )}
+
             </div>
           </div>
         ))}

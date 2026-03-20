@@ -1,18 +1,42 @@
 @import "tailwindcss";
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
+@theme {
+  --color-primary:                   #002e0b;
+  --color-primary-container:         #0b4619;
+  --color-secondary:                 #006d37;
+  --color-secondary-fixed:           #6bfe9c;
+  --color-surface:                   #f8faf9;
+  --color-surface-container:         #eceeed;
+  --color-surface-container-low:     #f2f4f3;
+  --color-surface-container-high:    #e6e9e8;
+  --color-surface-container-highest: #e1e3e2;
+  --color-surface-container-lowest:  #ffffff;
+  --color-on-surface:                #191c1c;
+  --color-on-surface-variant:        #41493f;
+  --color-on-primary:                #ffffff;
+  --color-outline:                   #71796f;
+  --color-outline-variant:           #c1c9bc;
+
+  --font-headline: 'Manrope', sans-serif;
+  --font-body:     'Inter', sans-serif;
+  --font-label:    'Inter', sans-serif;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.glass-panel {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.animate-fade-up { animation: fadeUp 0.7s ease both; }
-.animate-fade-in { animation: fadeIn 0.5s ease both; }
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
+.soulful-gradient {
+  background: linear-gradient(135deg, #002e0b 0%, #0b4619 100%);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.signature-gradient {
+  background: linear-gradient(135deg, #002e0b 0%, #0b4619 100%);
+}

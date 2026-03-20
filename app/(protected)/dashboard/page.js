@@ -3,12 +3,12 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { redirect } from 'next/navigation'
 import ScoreCard from '@/components/dashboard/ScoreCard'
 import CharityPicker from '@/components/dashboard/CharityPicker'
+import Link from 'next/link'
 
 export default async function Dashboard() {
   const user = await getUserProfile()
 
   if (!user) redirect('/login')
-  // if (user.subscription_status === 'inactive') redirect('/pricing')
 
   const { data: scores } = await supabaseAdmin
     .from('scores')
@@ -29,186 +29,372 @@ export default async function Dashboard() {
 
   const { data: winnings } = await supabaseAdmin
     .from('draw_results')
-    .select('prize_amount, status, match_count, created_at')
+    .select('prize_amount, status, match_count, created_at, matched_numbers')
     .eq('user_id', user.id)
     .gte('match_count', 3)
     .order('created_at', { ascending: false })
 
   const { data: latestDraw } = await supabaseAdmin
     .from('draws')
-    .select('total_pool, carry_forward_amount, draw_month')
+    .select('total_pool, carry_forward_amount, numbers, draw_month, status')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
 
-  const totalWon = winnings?.reduce((sum, w) => sum + (w.prize_amount || 0), 0) || 0
+  const totalWon = winnings?.reduce(
+    (sum, w) => sum + (w.prize_amount || 0), 0
+  ) || 0
 
   const now = new Date()
   const nextDraw = new Date(now.getFullYear(), now.getMonth() + 1, 1)
   const daysLeft = Math.ceil((nextDraw - now) / (1000 * 60 * 60 * 24))
 
-   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-[#f0ece0]">
+  const initials = user.name
+    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?'
 
-      {/* Nav Bar */}
-      <div className="border-b border-[#1a4a2e] px-8 py-4 flex items-center
-                      justify-between bg-[#0a0f0a] sticky top-0 z-10">
-        <div className="font-playfair text-xl text-[#c9a84c]">
-          GREEN<span className="text-[#f0ece0]">HEART</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <a href="/" className="text-sm text-[#7a9e7e] hover:text-[#f0ece0] transition-colors">
+  const isActive = user.subscription_status === 'active'
+
+  return (
+    <div className="min-h-screen bg-[#f8faf9] font-body text-[#191c1c]">
+
+      {/* ── NAV ── */}
+      <nav className="fixed top-0 z-50 flex items-center justify-between
+                      px-8 py-3 bg-white/60 backdrop-blur-xl rounded-full
+                      mt-4 w-[95%] max-w-7xl border border-white/40
+                      shadow-xl shadow-emerald-900/5"
+           style={{left: '50%', transform: 'translateX(-50%)'}}>
+        <Link href="/"
+          className="text-2xl font-extrabold text-emerald-950 font-headline
+                     tracking-tight">
+          GreenHeart
+        </Link>
+
+        <div className="hidden md:flex items-center gap-8">
+          <Link href="/"
+            className="text-emerald-900/70 font-medium hover:text-emerald-600
+                       transition-all text-sm">
             Home
-          </a>
-          <a href="/charities"
-            className="text-sm text-[#7a9e7e] hover:text-[#f0ece0] transition-colors">
+          </Link>
+          <Link href="/charities"
+            className="text-emerald-900/70 font-medium hover:text-emerald-600
+                       transition-all text-sm">
             Charities
-          </a>
-          <span className="text-sm text-[#7a9e7e]">
-            {user.name}
+          </Link>
+          <span className="text-emerald-700 font-bold border-b-2
+                           border-emerald-500 text-sm">
+            Dashboard
           </span>
+        </div>
+
+        {/* User avatar with subscription ring */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Gold ring if active, grey if inactive */}
+            <div className={`p-[2px] rounded-full ${
+              isActive
+                ? 'bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500'
+                : 'bg-[#c1c9bd]'
+            }`}>
+              <div className="w-9 h-9 rounded-full bg-[#002e0b] flex items-center
+                              justify-center text-white font-bold text-sm
+                              font-headline border-2 border-white">
+                {initials}
+              </div>
+            </div>
+            {/* Name in gold if active */}
+            <span className={`font-bold text-sm hidden md:block ${
+              isActive ? 'text-amber-600' : 'text-[#424940]'
+            }`}>
+              {user.name?.split(' ')[0]}
+              {isActive && (
+                <span className="ml-1.5 text-[10px] font-black tracking-widest
+                                 bg-amber-100 text-amber-700 px-2 py-0.5
+                                 rounded-full uppercase">
+                  PRO
+                </span>
+              )}
+            </span>
+          </div>
+
           <a href="/api/auth/logout"
-            className="text-xs text-[#4a5a4e] hover:text-red-400 transition-colors
-                       uppercase tracking-wider">
+            className="text-xs text-[#424940] hover:text-red-500
+                       transition-colors font-medium">
             Logout
           </a>
         </div>
-      </div>
+      </nav>
 
-      {/* Subscription Banner — only shown when inactive */}
-      {user.subscription_status !== 'active' && (
-        <div className="bg-[#c9a84c] text-[#0a0f0a] px-8 py-3 flex items-center
-                        justify-between">
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-sm">⚡ Subscribe to unlock scores, draws & prizes</span>
-          </div>
-          <a href="/pricing"
-            className="bg-[#0a0f0a] text-[#c9a84c] px-4 py-1.5 text-xs font-bold
-                       uppercase tracking-wider hover:bg-[#0f2d1a] transition-colors">
-            View Plans →
-          </a>
-        </div>
-      )}
+      <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto">
 
-      <div className="max-w-7xl mx-auto px-8 py-10 space-y-8">
-        <div>
-          <p className="text-[#c9a84c] text-xs tracking-[3px] uppercase mb-2">My Account</p>
-          <h1 className="font-playfair text-5xl">Dashboard</h1>
-          <div className="w-12 h-0.5 bg-[#c9a84c] mt-3"></div>
-        </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="border border-[#1a4a2e] p-6">
-            <p className="text-[#4a5a4e] text-xs uppercase tracking-wider mb-2">Subscription</p>
-            <p className="font-playfair text-3xl capitalize text-[#f0ece0]">
-              {user.subscription_status}
-            </p>
-            <p className="text-xs text-[#4a5a4e] mt-2">
-              {user.subscription_expiry
-                ? `Expires: ${new Date(user.subscription_expiry).toLocaleDateString('en-GB')}`
-                : 'Not subscribed'}
-            </p>
-          </div>
-
-          <div className="border border-[#1a4a2e] p-6">
-            <p className="text-[#4a5a4e] text-xs uppercase tracking-wider mb-2">Draws Entered</p>
-            <p className="font-playfair text-3xl text-[#f0ece0]">{participationCount || 0}</p>
-          </div>
-
-          <div className="border border-[#1a4a2e] p-6">
-            <p className="text-[#4a5a4e] text-xs uppercase tracking-wider mb-2">Total Won</p>
-            <p className="font-playfair text-3xl text-[#c9a84c]">£{totalWon.toFixed(2)}</p>
-          </div>
-
-          <div className="border border-[#1a4a2e] p-6">
-            <p className="text-[#4a5a4e] text-xs uppercase tracking-wider mb-2">Next Draw</p>
-            <p className="font-playfair text-3xl text-[#f0ece0]">{daysLeft} days</p>
-          </div>
-        </div>
-
-        {/* Locked state for inactive users */}
-        {user.subscription_status !== 'active' ? (
-          <div className="border border-dashed border-[#1a4a2e] p-16 text-center">
-            <p className="font-playfair text-4xl text-[#4a5a4e] mb-4">
-              Subscribe to Get Started
-            </p>
-            <p className="text-[#2a3a2e] mb-8 max-w-md mx-auto">
-              Choose a plan to start entering scores, joining monthly draws, 
-              and supporting your favourite charity.
-            </p>
-            <a href="/pricing"
-              className="bg-[#c9a84c] text-[#0a0f0a] px-10 py-4 font-bold
-                         tracking-widest uppercase text-sm hover:bg-[#b8943d] transition-colors">
+        {/* ── INACTIVE BANNER ── */}
+        {!isActive && (
+          <div className="mb-8 rounded-[1.5rem] p-5 flex items-center
+                          justify-between gap-4"
+            style={{background:'linear-gradient(135deg,#002e0b,#0b4619)'}}>
+            <div className="flex items-center gap-3 text-white">
+              <span className="material-symbols-outlined text-[#6bfe9c]">
+                lock
+              </span>
+              <p className="font-medium text-sm">
+                Subscribe to unlock scores, draws and prizes
+              </p>
+            </div>
+            <Link href="/pricing"
+              className="bg-white text-[#002e0b] px-5 py-2 rounded-full
+                         font-bold text-sm hover:bg-emerald-50 transition-colors
+                         whitespace-nowrap">
               View Plans →
-            </a>
+            </Link>
           </div>
-        ) : (
-          /* Active user content */
-          <>
-            {latestDraw && (
-              <div className="border border-[#c9a84c] bg-[#0f2d1a] p-6
-                              flex justify-between items-center">
-                <div>
-                  <p className="text-[#c9a84c] text-xs font-bold uppercase tracking-[3px] mb-2">
-                    Current Prize Pool
-                  </p>
-                  <p className="font-playfair text-5xl text-[#f0ece0]">
-                    £{(
-                      (latestDraw.total_pool || 0) +
-                      (latestDraw.carry_forward_amount || 0)
-                    ).toFixed(2)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[#4a5a4e] text-xs uppercase tracking-wider mb-1">
-                    Jackpot Rollover
-                  </p>
-                  <p className="font-playfair text-3xl text-[#c9a84c]">
-                    +£{(latestDraw.carry_forward_amount || 0).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            )}
+        )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-6">
+        {/* ── WELCOME HEADER ── */}
+        <header className="mb-12">
+          <h1 className="font-headline text-5xl font-extrabold text-[#002e0b]
+                         tracking-tight mb-2">
+            Welcome back, {user.name?.split(' ')[0]} 👋
+          </h1>
+          <p className="text-[#424940] text-lg">
+            {isActive
+              ? 'Your contributions are making a tangible difference today.'
+              : 'Subscribe to start entering draws and supporting charities.'}
+          </p>
+        </header>
+
+        {/* ── STATS BENTO ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4
+                        gap-6 mb-12">
+          <div className="glass-panel p-8 rounded-[2rem] flex flex-col
+                          justify-between min-h-[160px] shadow-xl
+                          shadow-emerald-900/5">
+            <span className="text-[#424940] font-medium text-sm">
+              Draws Entered
+            </span>
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-4xl font-bold font-headline text-[#002e0b]">
+                {participationCount || 0}
+              </span>
+              <span className="material-symbols-outlined text-[#006d37]"
+                style={{fontVariationSettings:"'FILL' 1"}}>
+                confirmation_number
+              </span>
+            </div>
+          </div>
+
+          <div className="glass-panel p-8 rounded-[2rem] flex flex-col
+                          justify-between shadow-xl shadow-emerald-900/5">
+            <span className="text-[#424940] font-medium text-sm">
+              Total Won
+            </span>
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-4xl font-bold font-headline text-[#002e0b]">
+                £{totalWon.toFixed(0)}
+              </span>
+              <span className="material-symbols-outlined text-[#006d37]"
+                style={{fontVariationSettings:"'FILL' 1"}}>
+                emoji_events
+              </span>
+            </div>
+          </div>
+
+          <div className="glass-panel p-8 rounded-[2rem] flex flex-col
+                          justify-between shadow-xl shadow-emerald-900/5">
+            <span className="text-[#424940] font-medium text-sm">
+              Next Draw In
+            </span>
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-4xl font-bold font-headline text-[#002e0b]">
+                {String(daysLeft).padStart(2, '0')}
+              </span>
+              <span className="text-[#424940] font-bold text-sm">DAYS</span>
+            </div>
+          </div>
+
+          <div className="glass-panel p-8 rounded-[2rem] flex flex-col
+                          justify-between shadow-xl shadow-emerald-900/5">
+            <span className="text-[#424940] font-medium text-sm">
+              Plan
+            </span>
+            <div className="flex items-end justify-between mt-4">
+              <span className="text-3xl font-bold font-headline text-[#002e0b] capitalize">
+                {user.subscription_plan || 'None'}
+              </span>
+              {isActive && (
+                <span className="bg-[#9bf6b2] text-emerald-900 px-3 py-1
+                                 rounded-full text-xs font-bold">
+                  ACTIVE
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-[#424940] mt-2">
+              {user.subscription_expiry
+                ? `Expires ${new Date(user.subscription_expiry)
+                    .toLocaleDateString('en-GB')}`
+                : 'Not subscribed'}
+            </span>
+          </div>
+        </div>
+
+        {/* ── PRIZE POOL BANNER ── */}
+        {latestDraw && (
+          <section className="rounded-[2rem] p-12 mb-12 relative overflow-hidden
+                              text-white flex flex-col md:flex-row items-center
+                              justify-between shadow-2xl"
+            style={{background:'linear-gradient(135deg,#002e0b 0%,#0b4619 100%)'}}>
+            <div className="absolute -right-20 -top-20 w-96 h-96
+                            bg-[#006d37]/20 rounded-full blur-3xl
+                            pointer-events-none" />
+            <div className="absolute -left-20 -bottom-20 w-64 h-64
+                            bg-emerald-400/10 rounded-full blur-3xl
+                            pointer-events-none" />
+            <div className="relative z-10 text-center md:text-left mb-8 md:mb-0">
+              <h2 className="tracking-widest text-[#6bfe9c] font-bold mb-2
+                             text-sm uppercase">
+                Current Prize Pool
+              </h2>
+              <div className="text-6xl md:text-8xl font-headline font-extrabold
+                              tracking-tighter">
+                £{(
+                  (latestDraw.total_pool || 0) +
+                  (latestDraw.carry_forward_amount || 0)
+                ).toFixed(0)}
+              </div>
+            </div>
+            <div className="relative z-10 text-center">
+              <p className="text-emerald-200 text-sm mb-3">
+                Jackpot rollover
+              </p>
+              <p className="text-[#6bfe9c] font-headline font-extrabold text-3xl">
+                +£{(latestDraw.carry_forward_amount || 0).toFixed(0)}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* ── MAIN GRID ── */}
+        {isActive ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            {/* LEFT */}
+            <div className="lg:col-span-7 space-y-8">
+
+              {/* Score Entry */}
+              <div className="glass-panel rounded-[2rem] p-8 shadow-sm">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="font-headline text-2xl font-extrabold
+                                 text-[#002e0b]">
+                    Your Entry Numbers
+                  </h2>
+                </div>
+
+                {/* Current scores display */}
+                {scores && scores.length > 0 && (
+                  <div className="flex flex-wrap gap-4 mb-8">
+                    {scores.map((s, i) => (
+                      <div key={s.id}
+                        className="w-14 h-14 rounded-full flex items-center
+                                   justify-center font-bold text-xl"
+                        style={{
+                          background: i === 0
+                            ? 'linear-gradient(135deg,#002e0b,#0b4619)'
+                            : '#f2f4f3',
+                          color: i === 0 ? 'white' : '#002e0b'
+                        }}>
+                        {s.score}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <ScoreCard initialScores={scores || []} />
-                <div className="border border-[#1a4a2e] p-6">
-                  <p className="text-[#c9a84c] text-xs tracking-[3px] uppercase mb-1">
-                    History
-                  </p>
-                  <h2 className="font-playfair text-2xl mb-6">My Winnings</h2>
-                  {winnings && winnings.length > 0 ? (
-                    <table className="w-full text-sm">
+              </div>
+
+              {/* Draw Results */}
+              {latestDraw && (
+                <div className="glass-panel rounded-[2rem] p-8 shadow-sm">
+                  <h2 className="font-headline text-2xl font-extrabold
+                                 text-[#002e0b] mb-6">
+                    Last Draw Results
+                  </h2>
+                  <div className="bg-[#f2f4f3] rounded-[1.5rem] p-6 flex
+                                  flex-col md:flex-row items-center
+                                  justify-between gap-6">
+                    <div className="flex flex-wrap gap-3">
+                      {latestDraw.numbers?.map((n) => {
+                        const userScoreVals = scores?.map(s => s.score) || []
+                        const isMatch = userScoreVals.includes(n)
+                        return (
+                          <div key={n}
+                            className="w-10 h-10 rounded-full flex items-center
+                                       justify-center font-bold text-sm border-2"
+                            style={{
+                              backgroundColor: isMatch ? '#9bf6b2' : 'white',
+                              borderColor: isMatch ? '#006d37' : '#c1c9bd',
+                              color: isMatch ? '#00210c' : '#424940'
+                            }}>
+                            {n}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-[#424940]
+                                     uppercase tracking-widest mb-1">
+                        Status
+                      </p>
+                      <span className="text-[#006d37] font-bold flex
+                                       items-center gap-1">
+                        <span className="material-symbols-outlined text-sm"
+                          style={{fontVariationSettings:"'FILL' 1"}}>
+                          check_circle
+                        </span>
+                        Draw {latestDraw.draw_month}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Winnings Table */}
+              <div className="glass-panel rounded-[2rem] p-8 shadow-sm">
+                <h2 className="font-headline text-2xl font-extrabold
+                               text-[#002e0b] mb-6">
+                  Recent Winnings
+                </h2>
+                {winnings && winnings.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
                       <thead>
-                        <tr className="border-b border-[#1a4a2e]">
-                          <th className="text-left pb-3 text-xs text-[#4a5a4e]
-                                         uppercase tracking-wider">Match</th>
-                          <th className="text-left pb-3 text-xs text-[#4a5a4e]
-                                         uppercase tracking-wider">Prize</th>
-                          <th className="text-left pb-3 text-xs text-[#4a5a4e]
-                                         uppercase tracking-wider">Status</th>
+                        <tr className="text-[#424940] text-xs uppercase
+                                       tracking-widest border-b
+                                       border-[#c1c9bd]/30">
+                          <th className="pb-4 font-bold">Match</th>
+                          <th className="pb-4 font-bold">Prize</th>
+                          <th className="pb-4 font-bold text-right">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#1a4a2e]">
+                      <tbody className="divide-y divide-[#c1c9bd]/10">
                         {winnings.map((w, i) => (
-                          <tr key={i} className="hover:bg-[#0f2d1a] transition-colors">
-                            <td className="py-4 font-bold">{w.match_count}-Match</td>
-                            <td className="py-4 font-playfair text-2xl text-[#c9a84c]">
-                              £{w.prize_amount?.toFixed(2)}
+                          <tr key={i}>
+                            <td className="py-4 font-medium">
+                              {w.match_count}-Match
                             </td>
-                            <td className="py-4">
-                              <span className={`text-xs font-bold uppercase tracking-wider
-                                               px-2 py-1 ${
+                            <td className="py-4 font-bold text-[#006d37]
+                                           font-headline text-xl">
+                              +£{w.prize_amount?.toFixed(2)}
+                            </td>
+                            <td className="py-4 text-right">
+                              <span className={`px-3 py-1 rounded-full text-xs
+                                               font-bold ${
                                 w.status === 'paid'
-                                  ? 'bg-emerald-900/30 text-emerald-400'
+                                  ? 'bg-[#9bf6b2] text-emerald-900'
                                   : w.status === 'approved'
-                                  ? 'bg-blue-900/30 text-blue-400'
+                                  ? 'bg-blue-100 text-blue-800'
                                   : w.status === 'rejected'
-                                  ? 'bg-red-900/30 text-red-400'
-                                  : 'bg-yellow-900/30 text-yellow-400'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-amber-100 text-amber-800'
                               }`}>
                                 {w.status}
                               </span>
@@ -217,64 +403,131 @@ export default async function Dashboard() {
                         ))}
                       </tbody>
                     </table>
-                  ) : (
-                    <div className="text-center py-10 border border-dashed border-[#1a4a2e]">
-                      <p className="font-playfair text-xl text-[#4a5a4e]">No winnings yet</p>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-10">
+                    <span className="material-symbols-outlined text-4xl
+                                     text-[#c1c9bd] block mb-3">
+                      emoji_events
+                    </span>
+                    <p className="text-[#424940] text-sm">
+                      No winnings yet — keep playing!
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-6">
-                <CharityPicker
-                  charities={charities || []}
-                  currentCharityId={user.charity_id}
-                  currentPercentage={user.charity_percentage}
-                />
-                <div className="border border-[#1a4a2e] p-6">
-                  <p className="text-[#c9a84c] text-xs tracking-[3px] uppercase mb-1">
-                    Subscription
-                  </p>
-                  <h2 className="font-playfair text-2xl mb-6">My Plan</h2>
-                  <div className="space-y-4">
+            </div>
+
+            {/* RIGHT */}
+            <div className="lg:col-span-5 space-y-8">
+
+              <CharityPicker
+                charities={charities || []}
+                currentCharityId={user.charity_id}
+                currentPercentage={user.charity_percentage}
+              />
+
+              {/* Plan Card */}
+              <div className="glass-panel rounded-[2rem] p-8 shadow-sm">
+                <h2 className="font-headline text-2xl font-extrabold
+                               text-[#002e0b] mb-6">
+                  Subscription Plan
+                </h2>
+
+                <div className="p-6 rounded-[1.5rem] text-white mb-6"
+                  style={{background:'linear-gradient(135deg,#002e0b,#0b4619)'}}>
+                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <p className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-1">
-                        Plan
-                      </p>
-                      <p className="font-bold capitalize">{user.subscription_plan || 'None'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-1">
-                        Charity Contribution
-                      </p>
-                      <p className="font-playfair text-3xl text-[#c9a84c]">
-                        {user.charity_percentage}%
+                      <h3 className="font-bold text-xl mb-1 capitalize">
+                        {user.subscription_plan || 'None'} Plan
+                      </h3>
+                      <p className="text-emerald-300 text-xs uppercase
+                                     tracking-widest font-bold">
+                        GreenHeart Member
                       </p>
                     </div>
-                    <div className="pt-4 border-t border-[#1a4a2e]">
-                      <p className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-1">
-                        Expires
-                      </p>
-                      <p className="text-sm">
-                        {user.subscription_expiry
-                          ? new Date(user.subscription_expiry).toLocaleDateString('en-GB', {
-                              day: 'numeric', month: 'long', year: 'numeric'
-                            })
-                          : 'N/A'}
-                      </p>
-                    </div>
+                    <span className="material-symbols-outlined text-[#6bfe9c]"
+                      style={{fontVariationSettings:"'FILL' 1"}}>
+                      verified_user
+                    </span>
+                  </div>
+                  <div className="text-sm text-emerald-200 mb-4">
+                    {user.subscription_expiry
+                      ? `Renews on ${new Date(user.subscription_expiry)
+                          .toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}`
+                      : 'No active plan'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-headline font-extrabold">
+                      {user.subscription_plan === 'yearly' ? '£99' : '£9.99'}
+                    </span>
+                    <span className="text-xs text-emerald-300">
+                      {user.subscription_plan === 'yearly'
+                        ? '/ year'
+                        : '/ month'}
+                    </span>
                   </div>
                 </div>
+
+                <div className="space-y-3 mb-6">
+                  {[
+                    'Monthly draw entry',
+                    '5-score rolling tracker',
+                    `Charity contribution ${user.charity_percentage}%`,
+                  ].map((f) => (
+                    <div key={f}
+                      className="flex items-center gap-3 text-sm text-[#424940]">
+                      <span className="material-symbols-outlined text-[#006d37]
+                                       text-lg">
+                        check
+                      </span>
+                      {f}
+                    </div>
+                  ))}
+                </div>
+
+                <Link href="/pricing"
+                  className="w-full py-4 rounded-full bg-[#eceeed]
+                             text-[#002e0b] font-bold hover:bg-[#e6e9e8]
+                             transition-colors text-center block text-sm">
+                  Change Plan
+                </Link>
               </div>
+
             </div>
-          </>
+          </div>
+        ) : (
+          /* Inactive — locked state */
+          <div className="glass-panel rounded-[2rem] p-16 text-center
+                          max-w-2xl mx-auto">
+            <span className="material-symbols-outlined text-5xl text-[#c1c9bd]
+                             block mb-4">
+              lock
+            </span>
+            <h3 className="font-headline text-3xl font-extrabold text-[#002e0b]
+                           mb-4">
+              Subscribe to Get Started
+            </h3>
+            <p className="text-[#424940] mb-8 leading-relaxed">
+              Choose a plan to start entering scores, joining monthly draws,
+              and supporting your favourite charity.
+            </p>
+            <Link href="/pricing"
+              className="text-white px-10 py-4 rounded-full font-bold
+                         inline-block hover:scale-105 transition-transform
+                         shadow-xl"
+              style={{background:'linear-gradient(135deg,#002e0b,#0b4619)'}}>
+              View Plans →
+            </Link>
+          </div>
         )}
-      </div>
+
+      </main>
     </div>
   )
-}
-
-// Proof upload component — inline since it's small
-function ProofUploadSection({ resultId }) {
-  return null // placeholder — handled by client component below
 }
