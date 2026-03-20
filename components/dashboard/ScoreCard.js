@@ -3,12 +3,12 @@
 import { useState } from 'react'
 
 export default function ScoreCard({ initialScores = [] }) {
-  const [scores, setScores] = useState(initialScores)
+  const [scores,   setScores]   = useState(initialScores)
   const [newScore, setNewScore] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [date,     setDate]     = useState(new Date().toISOString().split('T')[0])
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState('')
+  const [success,  setSuccess]  = useState('')
 
   const addScore = async () => {
     setError('')
@@ -24,17 +24,17 @@ export default function ScoreCard({ initialScores = [] }) {
 
     try {
       const res = await fetch('/api/scores/add', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score: parsed, date }),
+        body:    JSON.stringify({ score: parsed, date }),
       })
 
       const data = await res.json()
 
       if (res.ok) {
-        setSuccess('Score added successfully')
+        setSuccess('Score added!')
         setNewScore('')
-        const updated = await fetch('/api/scores')
+        const updated     = await fetch('/api/scores')
         const updatedData = await updated.json()
         if (updatedData.scores) setScores(updatedData.scores)
       } else {
@@ -48,81 +48,91 @@ export default function ScoreCard({ initialScores = [] }) {
   }
 
   return (
-    <div className="border border-[#1a4a2e] p-6">
-      <p className="text-[#c9a84c] text-xs tracking-[3px] uppercase mb-1">Stableford</p>
-      <h2 className="font-playfair text-2xl mb-6">My Scores</h2>
-
+    <div>
       {/* Input Row */}
       <div className="flex gap-3 mb-4 flex-wrap">
         <input
           type="number"
           placeholder="Score (1–45)"
-          className="bg-[#0f2d1a] border border-[#1a4a2e] text-[#f0ece0] px-4 py-3
-                     outline-none focus:border-[#c9a84c] transition-colors flex-1
-                     min-w-[120px] placeholder:text-[#2a3a2e]"
           value={newScore}
           min={1}
           max={45}
           onChange={(e) => setNewScore(e.target.value)}
+          className="bg-[#f2f4f3] border-none rounded-[1rem] px-4 py-3
+                     outline-none focus:ring-2 focus:ring-[#006d37]
+                     text-sm text-[#191c1c] placeholder:text-[#72796f]
+                     flex-1 min-w-[120px]"
         />
         <input
           type="date"
-          className="bg-[#0f2d1a] border border-[#1a4a2e] text-[#f0ece0] px-4 py-3
-                     outline-none focus:border-[#c9a84c] transition-colors flex-1
-                     min-w-[140px]"
           value={date}
           max={new Date().toISOString().split('T')[0]}
           onChange={(e) => setDate(e.target.value)}
+          className="bg-[#f2f4f3] border-none rounded-[1rem] px-4 py-3
+                     outline-none focus:ring-2 focus:ring-[#006d37]
+                     text-sm text-[#191c1c] flex-1 min-w-[140px]"
         />
         <button
           onClick={addScore}
           disabled={loading}
-          className="bg-[#c9a84c] text-[#0a0f0a] px-6 py-3 font-bold tracking-widest
-                     uppercase text-sm hover:bg-[#b8943d] transition-colors
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Adding...' : 'Add'}
+          className="text-white px-6 py-3 rounded-full font-bold text-sm
+                     hover:scale-105 transition-all disabled:opacity-50
+                     disabled:cursor-not-allowed disabled:hover:scale-100"
+          style={{background:'linear-gradient(135deg,#002e0b,#0b4619)'}}>
+          {loading ? 'Adding...' : 'Add Score'}
         </button>
       </div>
 
+      {/* Messages */}
       {error && (
-        <div className="border border-red-900 bg-red-900/20 px-4 py-2
-                        text-red-400 text-sm mb-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2
+                        rounded-[1rem] text-sm mb-4">
           {error}
         </div>
       )}
       {success && (
-        <div className="border border-emerald-900 bg-emerald-900/20 px-4 py-2
-                        text-emerald-400 text-sm mb-4">
+        <div className="bg-[#9bf6b2]/30 border border-[#006d37]/30 text-[#006d37]
+                        px-4 py-2 rounded-[1rem] text-sm mb-4">
           {success}
         </div>
       )}
 
-      <p className="text-xs text-[#4a5a4e] uppercase tracking-wider mb-3">
+      {/* Scores List */}
+      <p className="text-xs text-[#424940] uppercase tracking-wider font-bold mb-3">
         Last 5 scores · oldest auto-removed
       </p>
 
       {scores.length === 0 ? (
-        <div className="text-center py-8 border border-dashed border-[#1a4a2e]">
-          <p className="text-[#4a5a4e] font-playfair text-lg">No scores yet</p>
-          <p className="text-xs text-[#2a3a2e] mt-1">Add your first round above</p>
+        <div className="text-center py-8 bg-[#f2f4f3] rounded-[1.5rem]">
+          <span className="material-symbols-outlined text-3xl text-[#c1c9bd]
+                           block mb-2">
+            sports_golf
+          </span>
+          <p className="text-[#424940] text-sm">
+            No scores yet — add your first round!
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
           {scores.map((s, i) => (
             <div key={s.id}
-              className="flex justify-between items-center border border-[#1a4a2e]
-                         px-4 py-3 hover:bg-[#0f2d1a] transition-colors">
-              <div className="flex items-center gap-4">
+              className="flex justify-between items-center bg-[#f2f4f3]
+                         px-4 py-3 rounded-[1rem] hover:bg-[#eceeed]
+                         transition-colors">
+              <div className="flex items-center gap-3">
                 {i === 0 && (
-                  <span className="text-xs bg-[#c9a84c]/20 text-[#c9a84c] px-2 py-0.5
-                                   font-bold uppercase tracking-wider">
+                  <span className="bg-[#9bf6b2] text-[#00210c] text-[10px]
+                                   font-black uppercase tracking-widest px-2
+                                   py-0.5 rounded-full">
                     Latest
                   </span>
                 )}
-                <span className="font-playfair text-3xl text-[#f0ece0]">{s.score}</span>
+                <span className="font-headline font-extrabold text-2xl
+                                 text-[#002e0b]">
+                  {s.score}
+                </span>
               </div>
-              <span className="text-[#4a5a4e] text-sm">
+              <span className="text-[#424940] text-sm">
                 {new Date(s.date).toLocaleDateString('en-GB')}
               </span>
             </div>

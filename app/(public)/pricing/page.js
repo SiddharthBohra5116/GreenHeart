@@ -14,7 +14,7 @@ const MONTHLY_FEATURES = [
 
 const YEARLY_FEATURES = [
   'Everything in Monthly',
-  '2 Months Free — Save £20.88',
+  '2 Months Free — Save ₹1,598',
   '12 guaranteed draw entries',
   'Priority support',
   'Discounted rate per month',
@@ -55,7 +55,7 @@ export default function Pricing() {
       })
 
       if (res.ok) {
-        window.location.href = '/dashboard'
+        window.location.replace('/dashboard')
       } else {
         const data = await res.json()
         setError(data.error || 'Subscription failed. Please try again.')
@@ -115,7 +115,7 @@ export default function Pricing() {
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-5xl font-headline font-extrabold
                                  text-[#002e0b]">
-                  £9.99
+                  ₹799
                 </span>
                 <span className="text-[#424940] font-medium">/mo</span>
               </div>
@@ -176,12 +176,12 @@ export default function Pricing() {
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-5xl font-headline font-extrabold
                                  text-white">
-                  £99
+                  ₹7,999
                 </span>
                 <span className="text-emerald-200 font-medium">/yr</span>
               </div>
               <p className="mt-4 text-emerald-100/80 leading-relaxed text-sm">
-                Best value — equivalent to £8.25/month. Two months free
+                Best value — equivalent to ₹666/month. Two months free
                 compared to monthly billing.
               </p>
               <ul className="mt-10 space-y-4">

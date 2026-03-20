@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import ScoreCard from '@/components/dashboard/ScoreCard'
 import CharityPicker from '@/components/dashboard/CharityPicker'
 import Link from 'next/link'
+import ProofUpload from '@/components/dashboard/ProofUpload'
 
 export default async function Dashboard() {
   const user = await getUserProfile()
@@ -34,13 +35,24 @@ export default async function Dashboard() {
     .gte('match_count', 3)
     .order('created_at', { ascending: false })
 
+  // ✅ Fixed: .maybeSingle() instead of .single() — won't throw if no row
   const { data: latestDraw } = await supabaseAdmin
     .from('draws')
     .select('total_pool, carry_forward_amount, numbers, draw_month, status')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
+
+  // ✅ Fixed: user.id instead of profile.id
+  const { data: drawResult } = await supabaseAdmin
+    .from('draw_results')
+    .select('id, status, proof_url, match_count, prize_amount')
+    .eq('user_id', user.id)
+    .in('status', ['pending_verification', 'rejected'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
   const totalWon = winnings?.reduce(
     (sum, w) => sum + (w.prize_amount || 0), 0
@@ -88,10 +100,8 @@ export default async function Dashboard() {
           </span>
         </div>
 
-        {/* User avatar with subscription ring */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            {/* Gold ring if active, grey if inactive */}
             <div className={`p-[2px] rounded-full ${
               isActive
                 ? 'bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500'
@@ -103,7 +113,6 @@ export default async function Dashboard() {
                 {initials}
               </div>
             </div>
-            {/* Name in gold if active */}
             <span className={`font-bold text-sm hidden md:block ${
               isActive ? 'text-amber-600' : 'text-[#424940]'
             }`}>
@@ -190,7 +199,7 @@ export default async function Dashboard() {
             </span>
             <div className="flex items-center gap-3 mt-4">
               <span className="text-4xl font-bold font-headline text-[#002e0b]">
-                £{totalWon.toFixed(0)}
+                ₹{totalWon.toLocaleString('en-IN', {maximumFractionDigits:0})}
               </span>
               <span className="material-symbols-outlined text-[#006d37]"
                 style={{fontVariationSettings:"'FILL' 1"}}>
@@ -256,10 +265,10 @@ export default async function Dashboard() {
               </h2>
               <div className="text-6xl md:text-8xl font-headline font-extrabold
                               tracking-tighter">
-                £{(
+                ₹{(
                   (latestDraw.total_pool || 0) +
                   (latestDraw.carry_forward_amount || 0)
-                ).toFixed(0)}
+                ).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </div>
             </div>
             <div className="relative z-10 text-center">
@@ -267,10 +276,22 @@ export default async function Dashboard() {
                 Jackpot rollover
               </p>
               <p className="text-[#6bfe9c] font-headline font-extrabold text-3xl">
-                +£{(latestDraw.carry_forward_amount || 0).toFixed(0)}
+                +₹{(latestDraw.carry_forward_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </p>
             </div>
           </section>
+        )}
+
+        {/* ── PROOF UPLOAD — shown when user has a result needing verification ── */}
+        {drawResult && (
+          <div className="mb-8">
+            <ProofUpload
+              resultId={drawResult.id}
+              status={drawResult.status}
+              proofUrl={drawResult.proof_url}
+              onSuccess={() => window.location.replace('/dashboard')}
+            />
+          </div>
         )}
 
         {/* ── MAIN GRID ── */}
@@ -289,7 +310,6 @@ export default async function Dashboard() {
                   </h2>
                 </div>
 
-                {/* Current scores display */}
                 {scores && scores.length > 0 && (
                   <div className="flex flex-wrap gap-4 mb-8">
                     {scores.map((s, i) => (
@@ -383,7 +403,7 @@ export default async function Dashboard() {
                             </td>
                             <td className="py-4 font-bold text-[#006d37]
                                            font-headline text-xl">
-                              +£{w.prize_amount?.toFixed(2)}
+                              +₹{w.prize_amount?.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}
                             </td>
                             <td className="py-4 text-right">
                               <span className={`px-3 py-1 rounded-full text-xs
@@ -464,7 +484,7 @@ export default async function Dashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-headline font-extrabold">
-                      {user.subscription_plan === 'yearly' ? '£99' : '£9.99'}
+                      {user.subscription_plan === 'yearly' ? '₹7,999' : '₹799'}
                     </span>
                     <span className="text-xs text-emerald-300">
                       {user.subscription_plan === 'yearly'

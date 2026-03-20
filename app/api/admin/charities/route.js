@@ -56,26 +56,39 @@ export async function DELETE(req) {
 
     if (!id) return Response.json({ error: 'ID required' }, { status: 400 })
 
-    // Deletion guard
+    // Check how many users are linked to this charity
     const { count } = await supabaseAdmin
       .from('users')
       .select('*', { count: 'exact', head: true })
       .eq('charity_id', id)
 
     if (count > 0) {
+      // ✅ Users are linked — soft deactivate so FK refs stay intact
+      const { error } = await supabaseAdmin
+        .from('charities')
+        .update({ is_active: false })
+        .eq('id', id)
+
+      if (error) return Response.json({ error: error.message }, { status: 500 })
+
       return Response.json({
-        error: `Cannot delete — ${count} user(s) linked to this charity`
-      }, { status: 400 })
+        message: `Charity deactivated (${count} user(s) still linked — cannot fully delete)`,
+        action: 'deactivated',
+      })
     }
 
+    // ✅ No users linked — hard delete completely
     const { error } = await supabaseAdmin
       .from('charities')
-      .update({ is_active: false })
+      .delete()
       .eq('id', id)
 
     if (error) return Response.json({ error: error.message }, { status: 500 })
 
-    return Response.json({ message: 'Charity deactivated' })
+    return Response.json({
+      message: 'Charity permanently deleted',
+      action: 'deleted',
+    })
   } catch {
     return Response.json({ error: 'Server error' }, { status: 500 })
   }

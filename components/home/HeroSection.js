@@ -1,6 +1,26 @@
 import Link from 'next/link'
 
-export default function HeroSection() {
+// ── Indian currency formatter ─────────────────────────────────────
+function formatINR(amount) {
+  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(1)}Cr`
+  if (amount >= 100000)   return `₹${(amount / 100000).toFixed(1)}L`
+  if (amount >= 1000)     return `₹${(amount / 1000).toFixed(0)}k`
+  return `₹${amount.toFixed(0)}`
+}
+
+function formatMembers(count) {
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}k`
+  return count.toLocaleString('en-IN')
+}
+
+export default function HeroSection({ totalUsers = 0, totalDonated = 0, prizePool = 0 }) {
+
+  const stats = [
+    { val: formatMembers(totalUsers), label: 'Members' },
+    { val: formatINR(totalDonated),   label: 'Donated' },
+    { val: formatINR(prizePool),      label: 'Prize Pool' },
+  ]
+
   return (
     <section className="max-w-7xl mx-auto px-6 grid md:grid-cols-2
                         gap-16 items-center mb-24">
@@ -21,13 +41,9 @@ export default function HeroSection() {
           community turning fairways into fountains of change.
         </p>
 
-        {/* Stats */}
+        {/* ── LIVE STATS ── */}
         <div className="flex gap-10 py-6 border-y border-[#c1c9bd]/40">
-          {[
-            { val: '1,248', label: 'Members' },
-            { val: '£36k',  label: 'Donated' },
-            { val: '£12k',  label: 'Prize Pool' },
-          ].map((s) => (
+          {stats.map((s) => (
             <div key={s.label}>
               <div className="font-headline font-extrabold text-3xl text-emerald-950">
                 {s.val}
@@ -61,7 +77,6 @@ export default function HeroSection() {
                         glass-panel p-4 shadow-2xl">
           <div className="w-full h-full rounded-[1.5rem] overflow-hidden
                           relative bg-[#002e0b]">
-            {/* Unsplash image — free to use */}
             <img
               src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800"
               alt="Golf course at sunrise"
@@ -77,7 +92,7 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Floating stat card */}
+        {/* Floating stat card — live totalDonated */}
         <div className="absolute -bottom-8 -left-8 glass-panel p-6
                         rounded-[1.5rem] shadow-2xl max-w-xs border border-white/40">
           <div className="flex items-center gap-4">
@@ -89,10 +104,10 @@ export default function HeroSection() {
             <div>
               <p className="text-xs font-bold text-[#424940]
                              uppercase tracking-wider">
-                Daily Impact
+                Total Impact
               </p>
               <p className="text-lg font-bold text-emerald-950">
-                £36,200 Raised
+                {formatINR(totalDonated)} Raised
               </p>
             </div>
           </div>

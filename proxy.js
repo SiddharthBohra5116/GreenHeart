@@ -3,9 +3,8 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function proxy(req) {
   const path = req.nextUrl.pathname
-  const res = NextResponse.next()
 
-  // Public routes — no auth needed
+  // ── Public routes — skip auth entirely ──────────────────────
   if (
     path === '/' ||
     path === '/login' ||
@@ -13,13 +12,21 @@ export async function proxy(req) {
     path === '/pricing' ||
     path === '/charities' ||
     path.startsWith('/api/auth') ||
+    path.startsWith('/api/charities') ||
     path.startsWith('/_next') ||
     path.startsWith('/favicon')
   ) {
-    return res
+    return NextResponse.next()
   }
 
-  // Create SSR client — reads Supabase's own cookie format automatically
+  // ── CRITICAL FIX: create response AFTER public check,
+  //    and clone the request so cookie mutations are forwarded ──
+  let res = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  })
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -29,24 +36,39 @@ export async function proxy(req) {
           return req.cookies.get(name)?.value
         },
         set(name, value, options) {
+          // Must set on BOTH request and response so the
+          // refreshed session token propagates correctly
+          req.cookies.set({ name, value, ...options })
+          res = NextResponse.next({
+            request: { headers: req.headers },
+          })
           res.cookies.set({ name, value, ...options })
         },
         remove(name, options) {
+          req.cookies.set({ name, value: '', ...options })
+          res = NextResponse.next({
+            request: { headers: req.headers },
+          })
           res.cookies.set({ name, value: '', ...options })
         },
       },
     }
   )
 
-  // Use getUser() not getSession() — more secure
-  const { data: { user } } = await supabase.auth.getUser()
+  // ── Auth check — getUser() is secure (verifies with server) ──
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
 
-  // Not logged in — redirect to login
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', req.url))
+  if (userError || !user) {
+    const loginUrl = new URL('/login', req.url)
+    // Preserve intended destination so we can redirect back after login
+    loginUrl.searchParams.set('next', path)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // Fetch profile
+  // ── Profile fetch ─────────────────────────────────────────────
   const { data: profile } = await supabase
     .from('users')
     .select('role, subscription_status, subscription_expiry')
@@ -57,7 +79,7 @@ export async function proxy(req) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  // Block non-admins from admin routes
+  // ── Admin route guard ─────────────────────────────────────────
   const isAdminRoute =
     path.startsWith('/admin') ||
     path.startsWith('/api/admin') ||
@@ -73,7 +95,7 @@ export async function proxy(req) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
-  // Check expiry and update DB if needed
+  // ── Subscription expiry check — update DB if lapsed ──────────
   const isExpired =
     profile.subscription_expiry &&
     new Date(profile.subscription_expiry) < new Date()
@@ -85,7 +107,7 @@ export async function proxy(req) {
       .eq('id', user.id)
   }
 
-  // Block inactive users from score/donation APIs only
+  // ── Block inactive users from score/donation APIs only ────────
   const isInactive = profile.subscription_status === 'inactive' || isExpired
 
   if (
@@ -98,6 +120,7 @@ export async function proxy(req) {
     )
   }
 
+  // ── All good — return response with refreshed cookies ─────────
   return res
 }
 

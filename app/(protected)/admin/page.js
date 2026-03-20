@@ -1,6 +1,14 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 
+// ── Indian currency formatter ─────────────────────────────────────
+function formatINR(amount) {
+  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(1)}Cr`
+  if (amount >= 100000)   return `₹${(amount / 100000).toFixed(1)}L`
+  if (amount >= 1000)     return `₹${(amount / 1000).toFixed(1)}k`
+  return `₹${Number(amount).toFixed(0)}`
+}
+
 export default async function AdminOverview() {
   const { count: totalUsers } = await supabaseAdmin
     .from('users')
@@ -16,12 +24,13 @@ export default async function AdminOverview() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending_verification')
 
+  // ✅ Fixed: use .maybeSingle() not .single()
   const { data: latestDraw } = await supabaseAdmin
     .from('draws')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   const { data: recentWinners } = await supabaseAdmin
     .from('draw_results')
@@ -30,7 +39,8 @@ export default async function AdminOverview() {
     .order('created_at', { ascending: false })
     .limit(3)
 
-  const totalPool = (activeUsers || 0) * 4.995
+  // ✅ Fixed: ₹799/month × 50% prize contribution = ₹399.5 per active user
+  const totalPool = (activeUsers || 0) * 399.5
 
   const STATS = [
     {
@@ -52,7 +62,7 @@ export default async function AdminOverview() {
     {
       icon: 'account_balance_wallet',
       label: 'Prize Pool',
-      value: `£${totalPool.toFixed(0)}`,
+      value: formatINR(totalPool),
       trend: 'account_tree',
       trendLabel: 'Multi-tier',
       alert: false,
@@ -86,9 +96,7 @@ export default async function AdminOverview() {
                        shadow-lg hover:scale-105 transition-all flex
                        items-center gap-2 text-sm"
             style={{background:'linear-gradient(135deg,#002e0b,#0b4619)'}}>
-            <span className="material-symbols-outlined text-lg">
-              casino
-            </span>
+            <span className="material-symbols-outlined text-lg">casino</span>
             Run Draw
           </Link>
         </div>
@@ -107,8 +115,7 @@ export default async function AdminOverview() {
             </span>
             <div>
               <p className="text-[#424940] text-sm font-medium">{s.label}</p>
-              <h3 className="text-3xl font-extrabold text-[#002e0b]
-                             font-headline">
+              <h3 className="text-3xl font-extrabold text-[#002e0b] font-headline">
                 {s.value}
               </h3>
             </div>
@@ -131,8 +138,7 @@ export default async function AdminOverview() {
         <section className="xl:col-span-2">
           <div className="bg-white rounded-[2rem] p-8 shadow-sm">
             <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-extrabold text-[#002e0b]
-                             font-headline">
+              <h3 className="text-2xl font-extrabold text-[#002e0b] font-headline">
                 User Directory
               </h3>
               <Link href="/admin/users"
@@ -152,12 +158,10 @@ export default async function AdminOverview() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#eceeed]">
-                {/* Fetched in users page — show placeholder here */}
                 <tr className="hover:bg-[#f2f4f3]/50 transition-colors">
                   <td className="py-5 px-4" colSpan={4}>
                     <Link href="/admin/users"
-                      className="text-sm text-[#006d37] font-bold
-                                 hover:underline">
+                      className="text-sm text-[#006d37] font-bold hover:underline">
                       View all {totalUsers || 0} users →
                     </Link>
                   </td>
@@ -175,10 +179,8 @@ export default async function AdminOverview() {
                           shadow-xl"
             style={{background:'linear-gradient(135deg,#002e0b,#0b4619)'}}>
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5
-                            rounded-full -mr-16 -mt-16 blur-3xl
-                            pointer-events-none" />
-            <h3 className="text-xl font-extrabold mb-2 relative z-10
-                           font-headline">
+                            rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+            <h3 className="text-xl font-extrabold mb-2 relative z-10 font-headline">
               Monthly Grand Draw
             </h3>
             <p className="text-white/60 text-sm mb-8 relative z-10">
@@ -188,7 +190,7 @@ export default async function AdminOverview() {
             </p>
 
             {latestDraw?.numbers && (
-              <div className="flex gap-2 mb-6 relative z-10">
+              <div className="flex gap-2 mb-6 relative z-10 flex-wrap">
                 {latestDraw.numbers.map((n) => (
                   <div key={n}
                     className="w-10 h-10 rounded-full bg-[#6bfe9c]
@@ -205,9 +207,7 @@ export default async function AdminOverview() {
                 className="w-full py-4 rounded-full bg-[#6bfe9c] text-[#00210c]
                            font-bold hover:scale-105 transition-all flex
                            items-center justify-center gap-2 text-sm">
-                <span className="material-symbols-outlined text-xl">
-                  play_circle
-                </span>
+                <span className="material-symbols-outlined text-xl">play_circle</span>
                 Run Simulation
               </Link>
             </div>
@@ -216,8 +216,7 @@ export default async function AdminOverview() {
           {/* Recent Winners */}
           <div className="bg-white rounded-[2rem] p-8 shadow-sm">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-extrabold text-[#002e0b]
-                             font-headline">
+              <h3 className="text-xl font-extrabold text-[#002e0b] font-headline">
                 Recent Winners
               </h3>
               <Link href="/admin/winners"
@@ -243,7 +242,7 @@ export default async function AdminOverview() {
                           {w.users?.name || 'Unknown'}
                         </p>
                         <p className="text-xs font-bold text-[#006d37]">
-                          £{w.prize_amount?.toFixed(0)}
+                          {formatINR(w.prize_amount || 0)}
                         </p>
                       </div>
                       <p className="text-xs text-[#424940] mb-2">
@@ -297,8 +296,7 @@ export default async function AdminOverview() {
             </div>
             <Link href="/admin/charities"
               className="ml-auto px-4 py-2 bg-[#006d37] text-white text-xs
-                         font-bold rounded-full hover:scale-105 transition-all
-                         shrink-0">
+                         font-bold rounded-full hover:scale-105 transition-all shrink-0">
               Manage
             </Link>
           </div>
@@ -321,8 +319,7 @@ export default async function AdminOverview() {
             </div>
             <Link href="/admin/winners"
               className="ml-auto px-4 py-2 bg-amber-500 text-white text-xs
-                         font-bold rounded-full hover:scale-105 transition-all
-                         shrink-0">
+                         font-bold rounded-full hover:scale-105 transition-all shrink-0">
               Review
             </Link>
           </div>

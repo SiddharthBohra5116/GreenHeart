@@ -1,31 +1,48 @@
 import Link from 'next/link'
 
-const tiers = [
-  {
-    icon: 'emoji_events',
-    match: '5-Number Match',
-    pct: '40% of pool · Jackpot Rollover',
-    amount: '£4,800',
-    featured: true,
-    badge: 'JACKPOT',
-  },
-  {
-    icon: 'workspace_premium',
-    match: '4-Number Match',
-    pct: '35% of pool',
-    amount: '£4,200',
-    featured: false,
-  },
-  {
-    icon: 'military_tech',
-    match: '3-Number Match',
-    pct: '25% of pool',
-    amount: '£3,000',
-    featured: false,
-  },
-]
+// ── Indian currency formatter ─────────────────────────────────────
+function formatINR(amount) {
+  if (!amount || amount === 0) return '₹0'
+  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(1)}Cr`
+  if (amount >= 100000)   return `₹${(amount / 100000).toFixed(1)}L`
+  if (amount >= 1000)     return `₹${(amount / 1000).toFixed(1)}k`
+  return `₹${Number(amount).toFixed(0)}`
+}
 
-export default function PrizePool() {
+// ── Props ─────────────────────────────────────────────────────────
+// latestDraw — { total_pool, carry_forward_amount } | null
+export default function PrizePool({ latestDraw = null }) {
+
+  const totalPool = latestDraw
+    ? (latestDraw.total_pool || 0) + (latestDraw.carry_forward_amount || 0)
+    : 0
+
+  // Prize splits per PRD: 40% / 35% / 25%
+  const tiers = [
+    {
+      icon: 'emoji_events',
+      match: '5-Number Match',
+      pct: '40% of pool · Jackpot Rollover',
+      amount: formatINR(totalPool * 0.4),
+      featured: true,
+      badge: 'JACKPOT',
+    },
+    {
+      icon: 'workspace_premium',
+      match: '4-Number Match',
+      pct: '35% of pool',
+      amount: formatINR(totalPool * 0.35),
+      featured: false,
+    },
+    {
+      icon: 'military_tech',
+      match: '3-Number Match',
+      pct: '25% of pool',
+      amount: formatINR(totalPool * 0.25),
+      featured: false,
+    },
+  ]
+
   return (
     <section className="max-w-7xl mx-auto px-6 mb-32">
       <div className="mb-16">
@@ -35,8 +52,31 @@ export default function PrizePool() {
         </span>
         <h2 className="text-4xl md:text-5xl font-headline font-extrabold
                        text-emerald-950 mt-4 tracking-tight">
-          This Month's Prize Pool
+          {latestDraw
+            ? "This Month's Prize Pool"
+            : 'Monthly Prize Pool'}
         </h2>
+        {/* Show total pool if available */}
+        {totalPool > 0 && (
+          <p className="text-[#424940] mt-3 text-lg font-medium">
+            Total pool this month:{' '}
+            <span className="font-bold text-emerald-900">
+              {formatINR(totalPool)}
+            </span>
+            {latestDraw?.carry_forward_amount > 0 && (
+              <span className="ml-2 text-sm bg-[#9bf6b2] text-emerald-900
+                               px-3 py-0.5 rounded-full font-bold">
+                +{formatINR(latestDraw.carry_forward_amount)} rollover
+              </span>
+            )}
+          </p>
+        )}
+        {/* No draw published yet */}
+        {!latestDraw && (
+          <p className="text-[#424940] mt-3 text-sm">
+            Draw amounts are calculated once the monthly draw is published.
+          </p>
+        )}
       </div>
 
       <div className="grid md:grid-cols-3 gap-8">

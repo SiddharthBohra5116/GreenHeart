@@ -1,180 +1,172 @@
 # GreenHeart — Golf Charity Subscription Platform
 
-A subscription-based web platform combining golf performance tracking,
-charity fundraising, and a monthly draw-based reward engine.
-
-Built for the **Digital Heroes Full-Stack Development Trainee Selection Process**.
+A subscription-driven web platform combining golf performance tracking, charity fundraising, and a monthly draw-based reward engine. Built for the Digital Heroes Full-Stack Trainee Selection Process.
 
 ---
 
 ## Live Demo
 
 - **Website:** [your-vercel-url.vercel.app]
-- **User Login:** user@demo.com / demo123
-- **Admin Login:** admin@demo.com / admin123
+- **Test User:** user@demo.com / demo123
+- **Test Admin:** admin@demo.com / Admin@123
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
-| Frontend | Next.js 16 (App Router) |
+|-------|-----------|
+| Framework | Next.js 16 App Router (JavaScript) |
 | Styling | Tailwind CSS v4 |
 | Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth |
+| Auth | Supabase Auth (SSR) |
 | Deployment | Vercel |
 
 ---
 
-## Core Features
+## Features Built
 
-### User Side
-- Subscription system (Monthly £9.99 / Yearly £99)
-- 5-score rolling tracker (Stableford format, 1–45)
-- Monthly prize draw participation
-- Charity selection with variable contribution (10–50%)
-- Independent donation system
-- Winner verification — proof upload flow
-- Personal dashboard with draw countdown and prize pool
+### Subscription System
+- Monthly (₹799) and yearly (₹7,999) plans
+- Mock activation with expiry logic (30 days / 365 days)
+- Cancel subscription — user-initiated and admin-initiated
+- Real-time subscription status validation on every request via `proxy.js`
 
-### Admin Side
-- User management — view all subscribers
-- Draw engine — simulate → review → publish
-- Prize pool calculation with jackpot rollover
-- Charity CRUD with deletion guard
-- Winner verification — approve / reject / mark paid
+### Score Management
+- Rolling 5-score system (Stableford format, 1–45)
+- New score auto-replaces oldest
+- Date validation — no future dates allowed
+- Scores displayed newest-first
 
----
+### Draw & Reward Engine
+- Monthly draw simulation + publish flow
+- **Two draw modes:**
+  - `random` — standard lottery-style
+  - `algorithmic` — weighted by inverse score frequency (rare scores more likely to be drawn)
+- Prize tiers: 5-match (40%), 4-match (35%), 3-match (25%)
+- Jackpot rollover if no 5-match winner
+- Prizes split equally among multiple winners per tier
 
-## System Architecture
+### Charity System
+- Charity directory with category filter
+- Individual charity profile pages with donation stats
+- User selects charity at signup / can change on dashboard
+- 10% minimum contribution, slideable up to 50%
+- Donation recorded on every subscription activation
 
-### Database Schema
-```
-users         → profiles + subscription + charity link
-scores        → rolling 5 per user, 1-45 constraint
-charities     → category, featured flag, soft delete
-draws         → one per month, jackpot rollover
-draw_results  → match snapshot + verification workflow
-donations     → independent charity contributions
-```
+### Winner Verification
+- Proof upload UI on dashboard (screenshot URL)
+- Admin approve / reject / mark as paid flow
+- Status lifecycle: `pending_verification` → `approved` → `paid`
 
-### Access Control
-- Middleware runs on every protected route server-side
-- Role-based routing: /dashboard (user) vs /admin (admin)
-- Subscription expiry auto-checked and updated on every request
-- RLS enabled on all Supabase tables
+### User Dashboard
+- Subscription status + renewal date
+- Score entry interface
+- Charity picker + contribution slider
+- Draw participation count
+- Winnings table with payment status
+- Proof upload when winner verification is required
+- Cancel subscription with 2-step confirmation
 
-### Draw Logic
-1. Admin clicks Run Simulation (not saved to DB)
-2. 5 unique random numbers generated (1–45)
-3. Each active user's scores matched against drawn numbers
-4. Winners at 3/4/5 match receive prize from pool split (25/35/40%)
-5. Jackpot rolls over if no 5-match winner
-6. Admin reviews preview then publishes
-
-### Prize System
-```
-Total subscription fee = 100%
-  Prize pool = 50% (fixed)
-  Platform   = 50% (fixed)
-  
-  Charity deducted from platform share:
-  charity_amount = (fee × 0.5) × (charity_percentage / 100)
-
-Pool distribution:
-  5-match = 40% + carry forward (jackpot)
-  4-match = 35%
-  3-match = 25%
-  
-  No winners in tier 4/3 → remains in platform (by design)
-  No winner in tier 5    → carries forward to next month
-```
+### Admin Panel
+- User directory with live search + status filter
+- Admin cancel any user's subscription
+- Draw simulate (random or algorithmic) + publish
+- Charity CRUD (add, edit, delete, feature)
+- Winners management with approve / reject / mark as paid
+- System overview with live stats
 
 ---
 
-## Key Design Decisions
+## Known Limitations & Planned Enhancements
 
-**Why middleware over client-side checks?**
-Client-side auth can be bypassed. Middleware runs server-side on every
-request before the page loads — impossible to bypass.
+### Payment Gateway
+**Current state:** Mock activation only — no real payment processing.
+**Planned:** Stripe integration using `stripe.checkout.sessions.create()` with webhook handling for subscription lifecycle events (renewal, cancellation, failed payment).
 
-**Why snapshot user_scores in draw_results?**
-Users can edit scores after a draw. The snapshot freezes scores at draw
-time, preserving integrity against post-draw manipulation.
+### Email Notifications
+**Current state:** Not implemented.
+**Planned:** Transactional emails via [Resend](https://resend.com) or Nodemailer for:
+- Draw result notifications
+- Winner alerts with proof upload instructions
+- Subscription renewal reminders
+- Welcome email on signup
 
-**Why simulate before publish?**
-Admin needs to review results before they go live. Saving on simulate
-would corrupt the DB if the admin wants to re-run.
+### Charity Events / Upcoming Golf Days
+**Current state:** Charity profiles show description and donation stats.
+**Planned:** A `charity_events` table with event name, date, location, and registration link — displayed on individual charity profile pages.
 
-**Why soft delete charities (is_active)?**
-Hard delete breaks FK references in users.charity_id.
-Soft delete preserves data integrity.
+### Reports & Analytics
+**Current state:** Admin overview page shows headline stats.
+**Planned:** Dedicated `/admin/reports` page with charts for monthly revenue, donation totals per charity, draw participation rates, and winner payout history.
 
-**Why carry_forward on draws table?**
-Each draw record is self-contained. No extra joins needed to calculate
-jackpot — cleaner queries and auditable history.
-
----
-
-## Partially Implemented (By Design)
-
-| Feature | Status | Notes |
-|---|---|---|
-| Stripe payments | Not implemented | Mock activation used. Integration point marked in code. |
-| Weighted draw algorithm | DB field only | draw_logic column exists. Random only for now. |
-| Email notifications | Not implemented | Mentioned in system design. Schema extensible. |
-| Charity events | Not implemented | Schema extensible for Phase 2. |
-| Proof file upload | URL input only | No file storage. Text URL accepted for demo. |
+### Mobile App
+**Current state:** Mobile-responsive web app.
+**Planned:** React Native app sharing the same Supabase backend, using Expo for iOS/Android.
 
 ---
 
-## Local Setup
-```bash
-# Clone
-git clone https://github.com/yourusername/greenheart.git
-cd greenheart
+## Project Structure
 
-# Install
-npm install
-
-# Environment variables
-cp .env.example .env.local
-# Fill in your Supabase credentials
-
-# Run
-npm run dev
+```
+greenheart/
+  app/
+    page.js                          ← Homepage (Server Component, live stats)
+    layout.js                        ← Manrope + Inter fonts
+    globals.css                      ← Tailwind v4 @theme colors
+    (public)/
+      login/page.js
+      signup/page.js
+      pricing/page.js
+      charities/
+        page.js                      ← Charity listing (dynamic from DB)
+        [id]/page.js                 ← Individual charity profile
+    (protected)/
+      dashboard/page.js
+      admin/
+        layout.js
+        page.js
+        users/page.js
+        draw/page.js
+        charities/page.js
+        winners/page.js
+    api/
+      auth/login  logout  signup
+      subscription/activate  cancel
+      scores/route  add
+      charities/route
+      draw/simulate  publish
+      user/update-charity
+      admin/users  charities  winners
+      winners/proof
+  components/
+    home/  dashboard/  admin/  auth/
+  lib/
+    supabase.js  supabaseAdmin.js  getUser.js  getUserProfile.js
+  proxy.js                           ← Route protection (NOT middleware.js)
 ```
 
 ---
 
 ## Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SITE_URL=https://your-vercel-url.vercel.app
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
-
----
-
-## Database Setup
-
-Run the SQL in `/supabase/schema.sql` in your Supabase SQL editor.
 
 ---
 
 ## Deployment
 
-Deployed on Vercel. Connect GitHub repo and add environment variables
-in Vercel dashboard. Supabase project is separate from any personal accounts.
-```
+1. Create a **new** Vercel account (not personal/existing)
+2. Create a **new** Supabase project (not personal/existing)
+3. Import this repo to Vercel
+4. Add all environment variables in Vercel dashboard
+5. Deploy
 
 ---
 
-## Step 3 — Create .env.example
-
-Create `.env.example` at root (no real values — just the keys):
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+*Built by Siddharth Bohra for Digital Heroes Full-Stack Trainee Selection Process — March 2026*
