@@ -1,3 +1,4 @@
+// components/admin/AdminSidebar.js
 'use client'
 
 import Link from 'next/link'
@@ -9,6 +10,7 @@ const NAV = [
   { href: '/admin/draw',      icon: 'confirmation_number', label: 'Draw'      },
   { href: '/admin/charities', icon: 'volunteer_activism',  label: 'Charities' },
   { href: '/admin/winners',   icon: 'emoji_events',        label: 'Winners'   },
+  { href: '/admin/reports',   icon: 'bar_chart',           label: 'Reports'   },
 ]
 
 export default function AdminSidebar({ adminName }) {

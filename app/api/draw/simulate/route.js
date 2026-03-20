@@ -1,3 +1,5 @@
+// app/api/draw/simulate/route.js
+
 import { getUserProfile } from '@/lib/getUserProfile'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
@@ -12,12 +14,7 @@ function generateRandom() {
 
 // ── Algorithmic draw — weighted by score frequency across all users
 // Scores that appear MORE frequently are LESS likely to be drawn
-// (harder to match = bigger prize incentive to play consistently)
-async function generateAlgorithmic() {
-  const { data: allScores } = await supabaseAdmin
-    .from('scores')
-    .select('score')
-
+async function generateAlgorithmic(allScores) {
   // Count frequency of each score 1–45
   const freq = {}
   for (let i = 1; i <= 45; i++) freq[i] = 0
@@ -26,17 +23,15 @@ async function generateAlgorithmic() {
   }
 
   // Weight = inverse of frequency (rare scores weighted higher)
-  // If score never appeared, give it max weight
   const maxFreq = Math.max(...Object.values(freq)) || 1
   const weights = {}
   for (let i = 1; i <= 45; i++) {
-    weights[i] = (maxFreq - freq[i]) + 1 // +1 so no score has 0 weight
+    weights[i] = (maxFreq - freq[i]) + 1
   }
 
   // Weighted random selection without replacement
   const chosen = new Set()
   while (chosen.size < 5) {
-    // Build cumulative weight array from unchosen numbers only
     const pool = []
     let total = 0
     for (let i = 1; i <= 45; i++) {
@@ -45,7 +40,7 @@ async function generateAlgorithmic() {
         pool.push({ num: i, cumWeight: total })
       }
     }
-    const rand = Math.random() * total
+    const rand   = Math.random() * total
     const picked = pool.find(p => p.cumWeight >= rand)
     if (picked) chosen.add(picked.num)
   }
@@ -64,7 +59,7 @@ export async function POST(req) {
       return Response.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // ── Accept optional draw_logic param: 'random' | 'algorithmic' ──
+    // ── Accept optional draw_logic param ──────────────────────────
     let drawLogic = 'random'
     try {
       const body = await req.json()
@@ -100,22 +95,35 @@ export async function POST(req) {
       }, { status: 400 })
     }
 
-    // ── Generate draw numbers based on selected logic ─────────────
+    // ── Batch fetch ALL scores in one query (fix N+1 problem) ─────
+    const { data: allScoreRows } = await supabaseAdmin
+      .from('scores')
+      .select('user_id, score, date')
+      .order('date', { ascending: false })
+
+    // Group scores by user_id, keeping latest 5 per user
+    const scoresByUser = {}
+    for (const row of allScoreRows || []) {
+      if (!scoresByUser[row.user_id]) scoresByUser[row.user_id] = []
+      if (scoresByUser[row.user_id].length < 5) {
+        scoresByUser[row.user_id].push(row.score)
+      }
+    }
+
+    // ── Generate draw numbers ─────────────────────────────────────
     const numbers = drawLogic === 'algorithmic'
-      ? await generateAlgorithmic()
+      ? await generateAlgorithmic(allScoreRows)
       : generateRandom()
 
-    // Fetch all active users
+    // ── Fetch all active users in one query ───────────────────────
     const { data: users } = await supabaseAdmin
       .from('users')
       .select('id, subscription_plan')
       .eq('subscription_status', 'active')
 
     // ── Calculate total pool in INR ───────────────────────────────
-    // Monthly: ₹799 × 50% = ₹399.5 per user
-    // Yearly:  ₹7999/12 × 50% = ₹333.3 per user
     let totalPool = 0
-    for (const u of users) {
+    for (const u of users || []) {
       const fee = u.subscription_plan === 'yearly' ? 7999 / 12 : 799
       totalPool += fee * 0.5
     }
@@ -130,21 +138,14 @@ export async function POST(req) {
       .maybeSingle()
 
     const carryForward = lastDraw?.carry_forward_amount || 0
-    const jackpotPool = (totalPool * 0.40) + carryForward
-    const tier4Pool   = totalPool * 0.35
-    const tier3Pool   = totalPool * 0.25
+    const jackpotPool  = (totalPool * 0.40) + carryForward
+    const tier4Pool    = totalPool * 0.35
+    const tier3Pool    = totalPool * 0.25
 
     // ── Match each user's scores against draw numbers ─────────────
     const results = []
-    for (const user of users) {
-      const { data: scores } = await supabaseAdmin
-        .from('scores')
-        .select('score')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(5)
-
-      const userScores = scores?.map(s => s.score) || []
+    for (const user of users || []) {
+      const userScores = scoresByUser[user.id] || []
       const matched    = getIntersection(userScores, numbers)
 
       if (matched.length >= 3) {
@@ -170,13 +171,13 @@ export async function POST(req) {
 
     // Return preview — NOT saved to DB yet
     return Response.json({
-      preview:          true,
+      preview:         true,
       drawLogic,
       drawMonth,
       numbers,
-      totalPool:        parseFloat(totalPool.toFixed(2)),
-      carryForward:     parseFloat(carryForward.toFixed(2)),
-      newCarryForward:  parseFloat(newCarryForward.toFixed(2)),
+      totalPool:       parseFloat(totalPool.toFixed(2)),
+      carryForward:    parseFloat(carryForward.toFixed(2)),
+      newCarryForward: parseFloat(newCarryForward.toFixed(2)),
       winners: {
         five:  { count: winners5.length, prize: parseFloat(prize5.toFixed(2)) },
         four:  { count: winners4.length, prize: parseFloat(prize4.toFixed(2)) },

@@ -1,4 +1,7 @@
+// app/api/auth/signup/route.js
+
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(req) {
   try {
@@ -30,12 +33,12 @@ export async function POST(req) {
     const { error: dbError } = await supabaseAdmin
       .from('users')
       .insert([{
-        id: user.id,
+        id:                  user.id,
         name,
         email,
-        role: 'user',
+        role:                'user',
         subscription_status: 'inactive',
-        charity_percentage: 10,
+        charity_percentage:  10,
       }])
 
     if (dbError) {
@@ -44,9 +47,14 @@ export async function POST(req) {
       return Response.json({ error: dbError.message }, { status: 400 })
     }
 
+    // 4. Send welcome email (PRD §13 — non-blocking, don't fail signup if email fails)
+    sendWelcomeEmail({ name, email }).catch((err) => {
+      console.error('[Welcome email failed]', err)
+    })
+
     return Response.json({ message: 'Signup successful' })
 
-  } catch (err) {
+  } catch {
     return Response.json({ error: 'Something went wrong' }, { status: 500 })
   }
 }

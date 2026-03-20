@@ -11,8 +11,10 @@ export async function proxy(req) {
     path === '/signup' ||
     path === '/pricing' ||
     path === '/charities' ||
+    path.startsWith('/charities/') ||
     path.startsWith('/api/auth') ||
     path.startsWith('/api/charities') ||
+    path.startsWith('/api/stats') ||
     path.startsWith('/_next') ||
     path.startsWith('/favicon')
   ) {
@@ -135,5 +137,6 @@ export const config = {
     '/api/donations/:path*',
     '/api/user/:path*',
     '/api/winners/:path*',
+    '/api/update-charity/:path*',
   ],
 }

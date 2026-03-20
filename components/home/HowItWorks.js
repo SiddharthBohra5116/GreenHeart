@@ -1,18 +1,20 @@
+// components/home/HowItWorks.js
+
 const steps = [
   {
     icon: 'subscriptions',
     title: 'Subscribe',
-    desc: 'Pick monthly (£9.99) or yearly (£99). Choose a charity — at least 10% of your fee goes directly to them.'
+    desc: 'Pick monthly (₹799) or yearly (₹7,999). Choose a charity — at least 10% of your fee goes directly to them.',
   },
   {
     icon: 'sports_golf',
     title: 'Play',
-    desc: 'Log your last 5 Stableford scores (1–45). New scores automatically replace the oldest.'
+    desc: 'Log your last 5 Stableford scores (1–45). New scores automatically replace the oldest.',
   },
   {
     icon: 'card_giftcard',
     title: 'Give & Win',
-    desc: '5 numbers drawn monthly. Match 3, 4, or all 5 of your scores to win. Jackpot rolls over!'
+    desc: '5 numbers drawn monthly. Match 3, 4, or all 5 of your scores to win. Jackpot rolls over!',
   },
 ]
 

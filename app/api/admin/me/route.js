@@ -1,3 +1,5 @@
+// app/api/auth/me/route.js
+
 import { getUser } from '@/lib/getUser'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 

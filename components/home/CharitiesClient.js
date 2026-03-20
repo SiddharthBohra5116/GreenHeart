@@ -1,3 +1,4 @@
+// components/home/CharitiesClient.js
 'use client'
 
 import { useState } from 'react'
@@ -16,14 +17,51 @@ const FALLBACK_IMG  = 'https://images.unsplash.com/photo-1448375240586-882707db8
 
 export default function CharitiesClient({ charities, categories }) {
   const [active, setActive] = useState('All')
+  const [query,  setQuery]  = useState('')
 
-  const filtered =
-    active === 'All'
-      ? charities
-      : charities.filter(c => c.category === active)
+  // Filter by both category AND search query
+  const filtered = charities.filter((c) => {
+    const matchesCategory = active === 'All' || c.category === active
+    const q = query.toLowerCase().trim()
+    const matchesSearch =
+      !q ||
+      (c.name        || '').toLowerCase().includes(q) ||
+      (c.description || '').toLowerCase().includes(q) ||
+      (c.category    || '').toLowerCase().includes(q)
+    return matchesCategory && matchesSearch
+  })
 
   return (
     <>
+      {/* ── SEARCH BAR ── */}
+      <section className="mb-8">
+        <div className="relative max-w-xl">
+          <span className="material-symbols-outlined absolute left-4 top-1/2
+                           -translate-y-1/2 text-[#424940] text-xl pointer-events-none">
+            search
+          </span>
+          <input
+            type="text"
+            placeholder="Search charities by name, description or category…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full pl-12 pr-10 py-3 rounded-full bg-white
+                       border border-[#c1c9bd] text-sm text-[#191c1c]
+                       placeholder:text-[#72796f] outline-none
+                       focus:border-[#006d37] focus:ring-2
+                       focus:ring-[#006d37]/10 transition-all shadow-sm"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2
+                         text-[#72796f] hover:text-[#191c1c] transition-colors">
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+          )}
+        </div>
+      </section>
+
       {/* ── CATEGORY FILTERS ── */}
       <section className="mb-12">
         <div className="flex flex-wrap items-center gap-4">
@@ -46,6 +84,23 @@ export default function CharitiesClient({ charities, categories }) {
         </div>
       </section>
 
+      {/* ── RESULTS COUNT ── */}
+      {(query || active !== 'All') && (
+        <p className="text-xs text-[#424940] font-medium mb-6">
+          Showing <span className="font-bold text-[#002e0b]">{filtered.length}</span> of{' '}
+          <span className="font-bold text-[#002e0b]">{charities.length}</span> charities
+          {query && <span> matching &ldquo;{query}&rdquo;</span>}
+          {active !== 'All' && <span> in <span className="font-bold">{active}</span></span>}
+          {(query || active !== 'All') && (
+            <button
+              onClick={() => { setQuery(''); setActive('All') }}
+              className="ml-3 text-[#006d37] font-bold hover:underline">
+              Clear filters
+            </button>
+          )}
+        </p>
+      )}
+
       {/* ── CHARITIES GRID ── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filtered.length === 0 ? (
@@ -55,8 +110,13 @@ export default function CharitiesClient({ charities, categories }) {
               search_off
             </span>
             <p className="text-[#424940] text-lg font-medium">
-              No charities found in this category yet.
+              No charities found{query ? ` matching "${query}"` : ' in this category'}.
             </p>
+            <button
+              onClick={() => { setQuery(''); setActive('All') }}
+              className="mt-4 text-sm text-[#006d37] font-bold hover:underline">
+              Clear all filters
+            </button>
           </div>
         ) : (
           filtered.map((c) => {
@@ -64,7 +124,6 @@ export default function CharitiesClient({ charities, categories }) {
             const imgSrc = c.image_url?.trim() || FALLBACK_IMG
 
             return (
-              // ✅ Each card is now a link to the profile page
               <Link
                 key={c.id}
                 href={`/charities/${c.id}`}
@@ -90,7 +149,7 @@ export default function CharitiesClient({ charities, categories }) {
                                        font-bold uppercase tracking-wider"
                         style={{
                           backgroundColor: colors.bg,
-                          color: colors.text
+                          color: colors.text,
                         }}>
                         {c.category}
                       </span>
