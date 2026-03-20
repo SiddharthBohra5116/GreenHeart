@@ -21,19 +21,16 @@ export default function CharityPicker({
   const [loading,    setLoading]    = useState(false)
   const [message,    setMessage]    = useState({ text: '', ok: true })
 
-  // ✅ Fixed — always uses latest percentage value at time of click
   const updateCharity = async (charityId) => {
     setLoading(true)
     setMessage({ text: '', ok: true })
 
     try {
-      const res = await fetch('/api/user/update-charity', {
+      // Fixed: was /api/user/update-charity (wrong path — 404 always)
+      const res = await fetch('/api/update-charity', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          charityId,
-          percentage, // ✅ uses current slider value
-        }),
+        body:    JSON.stringify({ charityId, percentage }),
       })
 
       const data = await res.json()
@@ -42,7 +39,6 @@ export default function CharityPicker({
         setSelected(charityId)
         setMessage({ text: '✓ Charity updated!', ok: true })
       } else {
-        // ✅ Show actual error — not generic "something went wrong"
         setMessage({
           text: data.error || 'Update failed — please try again.',
           ok: false,
@@ -58,14 +54,14 @@ export default function CharityPicker({
     }
   }
 
-  // Also allow updating just the percentage on slider change
   const updatePercentage = async (newPct) => {
-    if (!selected) return // Nothing selected yet — just update local state
+    if (!selected) return
     setLoading(true)
     setMessage({ text: '', ok: true })
 
     try {
-      const res = await fetch('/api/user/update-charity', {
+      // Fixed: was /api/user/update-charity
+      const res = await fetch('/api/update-charity', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ charityId: selected, percentage: newPct }),
@@ -95,8 +91,7 @@ export default function CharityPicker({
       {/* Percentage Slider */}
       <div className="bg-[#f2f4f3] rounded-[1.5rem] p-5 mb-6">
         <div className="flex justify-between items-center mb-3">
-          <span className="text-xs font-bold text-[#424940] uppercase
-                           tracking-wider">
+          <span className="text-xs font-bold text-[#424940] uppercase tracking-wider">
             Contribution
           </span>
           <span className="font-headline font-extrabold text-2xl text-[#002e0b]">
@@ -113,8 +108,7 @@ export default function CharityPicker({
           onTouchEnd={(e) => updatePercentage(Number(e.target.value))}
           className="w-full accent-[#006d37]"
         />
-        <div className="flex justify-between text-[10px] text-[#72796f]
-                        font-bold uppercase tracking-wider mt-1">
+        <div className="flex justify-between text-[10px] text-[#72796f] font-bold uppercase tracking-wider mt-1">
           <span>10% min</span>
           <span>50% max</span>
         </div>
@@ -124,8 +118,7 @@ export default function CharityPicker({
       <div className="space-y-2">
         {charities.length === 0 ? (
           <div className="text-center py-8 bg-[#f2f4f3] rounded-[1.5rem]">
-            <span className="material-symbols-outlined text-3xl text-[#c1c9bd]
-                             block mb-2">
+            <span className="material-symbols-outlined text-3xl text-[#c1c9bd] block mb-2">
               volunteer_activism
             </span>
             <p className="text-[#424940] text-sm">
@@ -134,39 +127,32 @@ export default function CharityPicker({
           </div>
         ) : (
           charities.map((c) => {
-            const colors = CATEGORY_COLORS[c.category] ||
-              { bg: '#eceeed', text: '#424940' }
+            const colors = CATEGORY_COLORS[c.category] || { bg: '#eceeed', text: '#424940' }
             return (
               <button
                 key={c.id}
                 onClick={() => updateCharity(c.id)}
                 disabled={loading}
-                className={`w-full px-4 py-4 rounded-[1rem] text-left
-                            transition-all border-2 ${
+                className={`w-full px-4 py-4 rounded-[1rem] text-left transition-all border-2 ${
                   selected === c.id
                     ? 'border-[#006d37] bg-[#006d37]/5'
                     : 'border-transparent bg-[#f2f4f3] hover:bg-[#eceeed]'
                 } disabled:opacity-60 disabled:cursor-not-allowed`}>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-sm text-[#002e0b]">
-                      {c.name}
-                    </span>
+                    <span className="font-bold text-sm text-[#002e0b]">{c.name}</span>
                     {c.category && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px]
-                                       font-bold uppercase"
-                        style={{
-                          backgroundColor: colors.bg,
-                          color: colors.text
-                        }}>
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                        style={{ backgroundColor: colors.bg, color: colors.text }}>
                         {c.category}
                       </span>
                     )}
                   </div>
                   {selected === c.id && (
-                    <span className="material-symbols-outlined text-[#006d37]
-                                     text-lg"
-                      style={{fontVariationSettings:"'FILL' 1"}}>
+                    <span
+                      className="material-symbols-outlined text-[#006d37] text-lg"
+                      style={{ fontVariationSettings: "'FILL' 1" }}>
                       check_circle
                     </span>
                   )}
@@ -177,7 +163,6 @@ export default function CharityPicker({
         )}
       </div>
 
-      {/* Message */}
       {message.text && (
         <p className={`text-sm mt-4 text-center font-medium ${
           message.ok ? 'text-[#006d37]' : 'text-red-500'

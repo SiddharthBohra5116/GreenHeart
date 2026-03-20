@@ -10,13 +10,11 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export default async function Home() {
 
-  // ── Total active members ──────────────────────────────────────
   const { count: totalUsers } = await supabaseAdmin
     .from('users')
     .select('*', { count: 'exact', head: true })
     .eq('subscription_status', 'active')
 
-  // ── Total donated (sum of all donations) ─────────────────────
   const { data: donationData } = await supabaseAdmin
     .from('donations')
     .select('amount')
@@ -25,7 +23,6 @@ export default async function Home() {
     ? donationData.reduce((sum, d) => sum + (d.amount || 0), 0)
     : 0
 
-  // ── Current prize pool (latest published draw) ────────────────
   const { data: latestDraw } = await supabaseAdmin
     .from('draws')
     .select('total_pool, carry_forward_amount')
@@ -38,7 +35,6 @@ export default async function Home() {
     ? (latestDraw.total_pool || 0) + (latestDraw.carry_forward_amount || 0)
     : 0
 
-  // ── Monthly charity goal: sum of donations this calendar month ─
   const monthStart = new Date()
   monthStart.setDate(1)
   monthStart.setHours(0, 0, 0, 0)
@@ -52,7 +48,7 @@ export default async function Home() {
     ? monthlyData.reduce((sum, d) => sum + (d.amount || 0), 0)
     : 0
 
-  const MONTHLY_GOAL = 500000 // ₹5,00,000
+  const MONTHLY_GOAL = 500000
   const goalPercent = Math.min(
     Math.round((monthlyRaised / MONTHLY_GOAL) * 100),
     100
@@ -67,7 +63,8 @@ export default async function Home() {
           totalDonated={totalDonated}
           prizePool={prizePool}
         />
-        <CharityBanner />
+        {/* Fixed: pass live data instead of hardcoded strings */}
+        <CharityBanner totalDonated={totalDonated} prizePool={prizePool} />
         <HowItWorks />
         <PrizePool latestDraw={latestDraw} />
         <CharitiesSection />

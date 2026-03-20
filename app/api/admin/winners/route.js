@@ -49,6 +49,10 @@ export async function POST(req) {
     } else if (action === 'paid') {
       update = { status: 'paid' }
       message = 'Marked as paid'
+    } else if (action === 'pending_verification') {
+      // Re-open a rejected claim so the winner can resubmit proof
+      update = { status: 'pending_verification' }
+      message = 'Re-opened for proof submission'
     } else {
       return Response.json({ error: 'Invalid action' }, { status: 400 })
     }
